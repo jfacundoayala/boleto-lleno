@@ -1,0 +1,492 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Boleto Lleno</title>
+<meta name="description" content="Un boleto de café que solo se entrega si su plata ya está apartada. El contrato en Stellar Testnet, en vivo.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cpath d='M6 10h52a4 4 0 0 1 4 4v10a8 8 0 0 0 0 16v10a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V40a8 8 0 0 0 0-16V14a4 4 0 0 1 4-4Z' fill='%2355795F'/%3E%3Cpath d='M22 33l7 7 14-15' fill='none' stroke='%23F4E9DA' stroke-width='5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #FBF6EE;
+    --bg-2: #F3EADD;
+    --card: #FFFDF9;
+    --ink: #3E2A20;
+    --ink-2: #6E5647;
+    --ink-3: #9A8473;
+    --line: #E7DACA;
+    --green: #4F7458;
+    --green-2: #3F5F49;
+    --green-soft: #E3ECE2;
+    --coffee: #8A6D55;
+    --coffee-soft: #F1E6D8;
+    --red: #A4513F;
+    --shadow: 0 1px 2px rgba(62,42,32,.05), 0 8px 24px rgba(62,42,32,.06);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #1D1714; --bg-2: #241D19; --card: #2A221D; --ink: #F4E9DA; --ink-2: #D3C1AE;
+      --ink-3: #A8947F; --line: #3D322B; --green: #7EA385; --green-2: #6A9172;
+      --green-soft: #2C3A2F; --coffee: #C8A98C; --coffee-soft: #3A2E26; --red: #E08B76;
+      --shadow: 0 1px 2px rgba(0,0,0,.3), 0 8px 24px rgba(0,0,0,.25);
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #1D1714; --bg-2: #241D19; --card: #2A221D; --ink: #F4E9DA; --ink-2: #D3C1AE;
+    --ink-3: #A8947F; --line: #3D322B; --green: #7EA385; --green-2: #6A9172;
+    --green-soft: #2C3A2F; --coffee: #C8A98C; --coffee-soft: #3A2E26; --red: #E08B76;
+    --shadow: 0 1px 2px rgba(0,0,0,.3), 0 8px 24px rgba(0,0,0,.25);
+  }
+
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font: 16px/1.6 Inter, system-ui, -apple-system, "Segoe UI", sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  a { color: inherit; text-decoration-color: color-mix(in srgb, currentColor 35%, transparent); text-underline-offset: 3px; }
+  a:hover { text-decoration-color: currentColor; }
+  .wrap { max-width: 960px; margin: 0 auto; padding: 0 20px; }
+  .serif { font-family: Fraunces, Georgia, serif; font-optical-sizing: auto; }
+  .mono { font-family: "JetBrains Mono", ui-monospace, monospace; }
+
+  /* encabezado */
+  header { padding: 22px 0; }
+  header .wrap { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+  .brand { display: flex; align-items: center; gap: 10px; font-weight: 600; text-decoration: none; }
+  .brand svg { width: 30px; height: 30px; }
+  .brand span { font-family: Fraunces, Georgia, serif; font-size: 20px; }
+  .live {
+    display: inline-flex; align-items: center; gap: 8px; padding: 6px 12px; border-radius: 99px;
+    background: var(--green-soft); color: var(--green); font-size: 13px; font-weight: 500; white-space: nowrap;
+  }
+  .dot { width: 8px; height: 8px; border-radius: 50%; background: currentColor; position: relative; }
+  .dot::after {
+    content: ""; position: absolute; inset: 0; border-radius: 50%; background: currentColor;
+    animation: pulso 2s ease-out infinite;
+  }
+  .live.error { background: var(--coffee-soft); color: var(--red); }
+  .live.error .dot::after { animation: none; }
+  @keyframes pulso { from { transform: scale(1); opacity: .6; } to { transform: scale(2.8); opacity: 0; } }
+
+  /* portada */
+  .hero { padding: 40px 0 36px; }
+  .hero h1 { font-size: clamp(36px, 7vw, 60px); line-height: 1.05; margin: 0 0 16px; letter-spacing: -.02em; font-weight: 600; }
+  .hero p { font-size: 18px; color: var(--ink-2); max-width: 560px; margin: 0; }
+  .hero .pista { margin-top: 22px; display: flex; flex-wrap: wrap; gap: 10px; }
+  .boton {
+    display: inline-flex; align-items: center; gap: 8px; padding: 10px 16px; border-radius: 10px;
+    font: 500 14px/1 Inter, sans-serif; text-decoration: none; border: 1px solid var(--line);
+    background: var(--card); color: var(--ink); cursor: pointer; transition: transform .15s ease, border-color .15s ease;
+  }
+  .boton:hover { border-color: var(--ink-3); }
+  .boton:active { transform: scale(.97); }
+  .boton.lleno { background: var(--green-2); border-color: var(--green-2); color: #fff; }
+  .boton.lleno:hover { background: var(--green); border-color: var(--green); }
+  .boton svg { width: 16px; height: 16px; }
+
+  section { margin: 0 0 28px; }
+  .tarjeta { background: var(--card); border: 1px solid var(--line); border-radius: 18px; box-shadow: var(--shadow); }
+  h2 { font-family: Fraunces, Georgia, serif; font-weight: 600; font-size: 24px; margin: 0 0 4px; letter-spacing: -.01em; }
+  .sub { color: var(--ink-3); font-size: 14px; margin: 0 0 20px; }
+
+  /* estado */
+  .estado { padding: 28px; }
+  .estado-cabeza { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; flex-wrap: wrap; }
+  .numeros { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-top: 8px; }
+  .numero { padding: 16px; border-radius: 14px; background: var(--bg-2); }
+  .numero b { display: block; font: 600 32px/1.1 Fraunces, Georgia, serif; font-variant-numeric: tabular-nums; }
+  .numero small { color: var(--ink-2); font-size: 13px; }
+  .numero.verde { background: var(--green-soft); }
+  .numero.verde b { color: var(--green); }
+  .numero.cafe { background: var(--coffee-soft); }
+  .numero.cafe b { color: var(--coffee); }
+
+  .boletos { display: flex; flex-wrap: wrap; gap: 8px; margin: 22px 0 6px; min-height: 30px; align-items: center; }
+  .boletos svg { width: 44px; height: 28px; }
+  .vacio { color: var(--ink-3); font-size: 14px; }
+  .leyenda { display: flex; gap: 16px; flex-wrap: wrap; font-size: 13px; color: var(--ink-2); }
+  .leyenda i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 6px; vertical-align: -1px; }
+
+  .regla {
+    margin-top: 22px; padding: 16px 18px; border-radius: 14px; display: flex; gap: 14px; align-items: center;
+    border: 1px dashed var(--line);
+  }
+  .regla .icono { flex: none; width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; background: var(--green-soft); color: var(--green); }
+  .regla.mal .icono { background: var(--coffee-soft); color: var(--red); }
+  .regla .icono svg { width: 18px; height: 18px; }
+  .regla p { margin: 0; font-size: 15px; }
+  .regla small { color: var(--ink-3); }
+
+  /* dos columnas */
+  .doble { display: grid; grid-template-columns: 1fr 1fr; gap: 28px; }
+  .bloque { padding: 24px; }
+
+  /* consulta */
+  form { display: flex; gap: 8px; }
+  input {
+    flex: 1; min-width: 0; padding: 11px 14px; border-radius: 10px; border: 1px solid var(--line);
+    background: var(--bg); color: var(--ink); font: 13px "JetBrains Mono", monospace;
+  }
+  input:focus { outline: 2px solid var(--green); outline-offset: 1px; border-color: transparent; }
+  .respuesta { margin-top: 16px; padding: 16px; border-radius: 12px; background: var(--bg-2); font-size: 15px; display: none; }
+  .respuesta.ver { display: block; }
+  .respuesta b { font-family: Fraunces, Georgia, serif; font-size: 22px; }
+  .chico { font-size: 13px; color: var(--ink-3); margin-top: 10px; }
+  .chico button { background: none; border: 0; padding: 0; color: var(--green); font: inherit; cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
+
+  /* pasos */
+  .pasos { list-style: none; margin: 0; padding: 0; display: grid; gap: 14px; }
+  .pasos li { display: grid; grid-template-columns: 30px 1fr; gap: 12px; align-items: start; }
+  .pasos .n { width: 30px; height: 30px; border-radius: 50%; background: var(--coffee-soft); color: var(--coffee); display: grid; place-items: center; font: 600 14px Fraunces, Georgia, serif; }
+  .pasos code { font: 500 13px "JetBrains Mono", monospace; color: var(--ink); }
+  .pasos p { margin: 2px 0 0; color: var(--ink-2); font-size: 14px; }
+
+  /* historia */
+  .historia { padding: 24px; }
+  .linea { list-style: none; margin: 0; padding: 0; position: relative; }
+  .linea::before { content: ""; position: absolute; left: 17px; top: 18px; bottom: 18px; width: 2px; background: var(--line); }
+  .linea li { position: relative; display: grid; grid-template-columns: 36px 1fr auto; gap: 14px; align-items: center; padding: 10px 0; }
+  .linea .marca { width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; background: var(--card); border: 2px solid var(--line); z-index: 1; }
+  .linea .marca svg { width: 16px; height: 16px; }
+  .linea .t { font-weight: 500; }
+  .linea .q { color: var(--ink-3); font-size: 13px; }
+  .linea a.tx { font: 12px "JetBrains Mono", monospace; color: var(--ink-3); white-space: nowrap; }
+  .m-cargar { color: var(--green); } .m-entregar { color: var(--coffee); } .m-cobrar { color: var(--green); } .m-retirar { color: var(--ink-2); } .m-publicar { color: var(--ink-3); }
+
+  .datos { display: grid; grid-template-columns: auto 1fr; gap: 8px 16px; font-size: 14px; margin: 0; }
+  .datos dt { color: var(--ink-3); }
+  .datos dd { margin: 0; overflow-wrap: anywhere; }
+
+  footer { padding: 28px 0 48px; color: var(--ink-3); font-size: 13px; }
+  footer .wrap { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+
+  .cargando { color: var(--ink-3); }
+  .esqueleto { display: inline-block; min-width: 1.2em; border-radius: 6px; background: var(--line); color: transparent; animation: brillo 1.2s ease-in-out infinite alternate; }
+  @keyframes brillo { from { opacity: .5; } to { opacity: 1; } }
+  .aparece { animation: aparece .4s ease both; }
+  @keyframes aparece { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+
+  @media (max-width: 760px) {
+    .numeros { grid-template-columns: repeat(2, 1fr); }
+    .doble { grid-template-columns: 1fr; }
+    .estado, .bloque, .historia { padding: 20px; }
+    .linea li { grid-template-columns: 36px 1fr; }
+    .linea a.tx { grid-column: 2; }
+    br.ancho { display: none; }
+  }
+  @media (max-width: 420px) {
+    .wrap { padding: 0 16px; }
+    form { flex-direction: column; }
+    .live .texto-largo { display: none; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::after { animation: none !important; transition: none !important; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <a class="brand" href="./">
+      <svg viewBox="0 0 64 64" aria-hidden="true"><path d="M6 10h52a4 4 0 0 1 4 4v10a8 8 0 0 0 0 16v10a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V40a8 8 0 0 0 0-16V14a4 4 0 0 1 4-4Z" fill="var(--green-2)"/><path d="M22 33l7 7 14-15" fill="none" stroke="#F4E9DA" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <span>Boleto Lleno</span>
+    </a>
+    <span class="live" id="vivo"><span class="dot"></span><span id="vivo-texto">Conectando<span class="texto-largo"> con Testnet</span></span></span>
+  </div>
+</header>
+
+<main class="wrap">
+  <div class="hero">
+    <h1 class="serif">Ningún boleto de café <br class="ancho">sin su plata apartada</h1>
+    <p>En algunos cafetales de Costa Rica el recolector recibe un boleto por cada cajuela y después lo cambia por plata. Este contrato en Stellar solo deja entregar un boleto si su plata ya está guardada.</p>
+    <div class="pista">
+      <a class="boton lleno" href="https://github.com/jfacundoayala/boleto-lleno">
+        <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/></svg>
+        Ver el código
+      </a>
+      <a class="boton" id="link-contrato" href="https://stellar.expert/explorer/testnet/contract/CCKXXTVEZXKXANOEJBYKLSBWOLR5CZ72I4KBJY27QIN3DKAK6BSXIHOI">Ver el contrato en la red ↗</a>
+    </div>
+  </div>
+
+  <section class="tarjeta estado" aria-live="polite">
+    <div class="estado-cabeza">
+      <div>
+        <h2>Cómo está el contrato ahora</h2>
+        <p class="sub" id="actualizado">Leyendo el contrato…</p>
+      </div>
+      <button class="boton" id="refrescar" type="button">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/></svg>
+        Actualizar
+      </button>
+    </div>
+
+    <div class="numeros">
+      <div class="numero verde"><b id="n-libres"><span class="esqueleto">0</span></b><small>boletos libres, con plata</small></div>
+      <div class="numero cafe"><b id="n-entregados"><span class="esqueleto">0</span></b><small>entregados sin cobrar</small></div>
+      <div class="numero"><b id="n-valor"><span class="esqueleto">0</span></b><small>XLM vale cada boleto</small></div>
+      <div class="numero"><b id="n-saldo"><span class="esqueleto">0</span></b><small>XLM guardados en el contrato</small></div>
+    </div>
+
+    <div class="boletos" id="boletos"></div>
+    <div class="leyenda">
+      <span><i style="background:var(--green)"></i>Libre: tiene plata y es de nadie</span>
+      <span><i style="background:var(--coffee)"></i>Entregado: tiene plata y es de un recolector</span>
+    </div>
+
+    <div class="regla" id="regla">
+      <div class="icono"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></div>
+      <div><p id="regla-texto">Revisando que la plata alcance…</p><small id="regla-cuenta"></small></div>
+    </div>
+  </section>
+
+  <div class="doble">
+    <section class="tarjeta bloque">
+      <h2>¿Cuántos boletos tiene?</h2>
+      <p class="sub">Pegá la cuenta de un recolector. Lee el contrato, no hace falta firmar.</p>
+      <form id="consulta">
+        <input id="cuenta" placeholder="G…" autocomplete="off" spellcheck="false" aria-label="Cuenta del recolector">
+        <button class="boton lleno" type="submit">Consultar</button>
+      </form>
+      <div class="respuesta" id="respuesta"></div>
+      <p class="chico">Probá con <button type="button" id="rosa">la cuenta de Rosa</button>, la recolectora de la prueba.</p>
+    </section>
+
+    <section class="tarjeta bloque">
+      <h2>Las cuatro acciones</h2>
+      <p class="sub">Cada una la firma quien corresponde.</p>
+      <ol class="pasos">
+        <li><span class="n">1</span><div><code>cargar</code><p>El productor aparta la plata de los boletos.</p></div></li>
+        <li><span class="n">2</span><div><code>entregar</code><p>El medidor da boletos, solo si tienen plata.</p></div></li>
+        <li><span class="n">3</span><div><code>cobrar</code><p>Cualquiera lo pide y la plata va al recolector.</p></div></li>
+        <li><span class="n">4</span><div><code>retirar</code><p>El productor saca solo lo que no se entregó.</p></div></li>
+      </ol>
+    </section>
+  </div>
+
+  <section class="tarjeta historia">
+    <h2>Lo que pasó en el contrato</h2>
+    <p class="sub">Cada movimiento queda en la red. Tocá el código para ver la transacción.</p>
+    <ol class="linea" id="historia"><li class="cargando">Buscando movimientos…</li></ol>
+  </section>
+
+  <section class="tarjeta bloque">
+    <h2>Datos fijos</h2>
+    <p class="sub">Se eligen al publicar el contrato y no se pueden cambiar.</p>
+    <dl class="datos" id="datos">
+      <dt>Productor</dt><dd class="mono" id="d-productor">…</dd>
+      <dt>Medidor</dt><dd class="mono" id="d-medidor">…</dd>
+      <dt>Moneda</dt><dd id="d-moneda">…</dd>
+      <dt>Contrato</dt><dd class="mono"><a href="https://stellar.expert/explorer/testnet/contract/CCKXXTVEZXKXANOEJBYKLSBWOLR5CZ72I4KBJY27QIN3DKAK6BSXIHOI">CCKXXT…BSXIHOI</a></dd>
+      <dt>Red</dt><dd>Stellar Testnet, la red de prueba</dd>
+    </dl>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <span>Boleto Lleno · Pura Vida Bootcamp · Juan Facundo Ayala</span>
+    <span>Es una práctica en Testnet y no maneja plata real.</span>
+  </div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/@stellar/stellar-sdk@17.4.0/dist/stellar-sdk.min.js"></script>
+<script>
+(() => {
+  const S = window.StellarSdk;
+  const CONTRATO = "CCKXXTVEZXKXANOEJBYKLSBWOLR5CZ72I4KBJY27QIN3DKAK6BSXIHOI";
+  const RPC = "https://soroban-testnet.stellar.org";
+  const RED = S.Networks.TESTNET;
+  const XLM_SAC = "CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC";
+  const ROSA = "GCG32KQZE7FK4TDWGQGXYO3QMOBFPWEJMYM7XH7JYNAKZJ36VF223VSH";
+  const EXPERT = "https://stellar.expert/explorer/testnet";
+  const STROOPS = 10_000_000n;
+
+  // La prueba del README. La red guarda los eventos solo unos 7 días,
+  // así que estos quedan siempre a la vista. Los nuevos se leen en vivo.
+  const PRUEBA = [
+    { tipo: "publicar", hash: "f100f56413d17956c4a8ed8ac05a72ebb9fb9387f239227553d1eb75ca3e6947", fecha: "2026-11-25T21:13:18Z", texto: "Se publica el contrato", detalle: "Boletos de 2 XLM" },
+    { tipo: "cargar", hash: "c0ba35c7c0b05708e468c4df76defa2ba05f38a81572b3e241b165340c5edaee", fecha: "2026-11-25T21:13:23Z", texto: "El productor carga 5 boletos", detalle: "Entran 10 XLM" },
+    { tipo: "entregar", hash: "39d393f85313ccb2bc4e44b8a2a490f654354f781720c736214bcdec28514aab", fecha: "2026-11-25T21:13:28Z", texto: "El medidor entrega 3 boletos a GCG32K…3VSH", detalle: "Entrega número 1" },
+    { tipo: "retirar", hash: "d4218567d9849efe653b5891ede37b24e5ba35a6508175e565eb5e4c0a86dda2", fecha: "2026-11-25T21:13:33Z", texto: "El productor retira 2 boletos", detalle: "Vuelven 4 XLM" },
+    { tipo: "cobrar", hash: "40cff2635620feeddf85dad88d12f13a7198d44a8f394e40d24165de1be3e9fc", fecha: "2026-11-25T21:13:38Z", texto: "Se cobran 3 boletos para GCG32K…3VSH", detalle: "Le llegan 6 XLM" },
+  ];
+
+  const $ = (id) => document.getElementById(id);
+  const corto = (a) => a.slice(0, 6) + "…" + a.slice(-4);
+  const xlm = (stroops) => {
+    const v = BigInt(stroops);
+    const ent = v / STROOPS, dec = v % STROOPS;
+    return dec === 0n ? ent.toString() : (Number(v) / 1e7).toLocaleString("es-CR", { maximumFractionDigits: 7 });
+  };
+  const fecha = (iso) => new Date(iso).toLocaleString("es-CR", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
+
+  const ICONOS = {
+    publicar: '<path d="M12 3v12"/><path d="m7 8 5-5 5 5"/><path d="M5 21h14"/>',
+    cargar: '<path d="M12 5v14"/><path d="M5 12h14"/>',
+    entregar: '<path d="M5 12h14"/><path d="m13 5 7 7-7 7"/>',
+    cobrar: '<path d="M20 6 9 17l-5-5"/>',
+    retirar: '<path d="M19 12H5"/><path d="m11 19-7-7 7-7"/>',
+  };
+  const icono = (t) => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">${ICONOS[t]}</svg>`;
+  const boleto = (color) => `<svg viewBox="0 0 44 28" aria-hidden="true"><path d="M4 0h36a4 4 0 0 1 4 4v6a4 4 0 0 0 0 8v6a4 4 0 0 1-4 4H4a4 4 0 0 1-4-4v-6a4 4 0 0 0 0-8V4a4 4 0 0 1 4-4Z" fill="${color}"/><path d="M15 14.5l4 4 9-9" fill="none" stroke="#F4E9DA" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+
+  let cliente, monedaCliente, servidor;
+
+  async function conectar() {
+    servidor = new S.rpc.Server(RPC);
+    cliente = await S.contract.Client.from({ contractId: CONTRATO, rpcUrl: RPC, networkPassphrase: RED });
+  }
+
+  function vivo(ok, texto) {
+    $("vivo").classList.toggle("error", !ok);
+    $("vivo-texto").innerHTML = texto;
+  }
+
+  async function leerEstado() {
+    const [e, d] = await Promise.all([cliente.estado(), cliente.datos()]);
+    const estado = e.result, datos = d.result;
+    if (!monedaCliente) {
+      monedaCliente = await S.contract.Client.from({ contractId: datos.moneda, rpcUrl: RPC, networkPassphrase: RED });
+    }
+    const saldo = (await monedaCliente.balance({ id: CONTRATO })).result;
+    return { estado, datos, saldo: BigInt(saldo) };
+  }
+
+  function pintarEstado({ estado, datos, saldo }) {
+    const valor = BigInt(datos.valor);
+    $("n-libres").textContent = estado.libres;
+    $("n-entregados").textContent = estado.entregados;
+    $("n-valor").textContent = xlm(valor);
+    $("n-saldo").textContent = xlm(saldo);
+
+    const caja = $("boletos");
+    const total = estado.libres + estado.entregados;
+    if (total === 0) {
+      caja.innerHTML = '<span class="vacio">Ahora no hay boletos: la prueba terminó con todo cobrado o retirado.</span>';
+    } else {
+      const max = 40;
+      const html = [];
+      for (let i = 0; i < Math.min(estado.libres, max); i++) html.push(boleto("var(--green)"));
+      for (let i = 0; i < Math.min(estado.entregados, max); i++) html.push(boleto("var(--coffee)"));
+      if (total > 2 * max) html.push(`<span class="vacio">y más</span>`);
+      caja.innerHTML = html.join("");
+    }
+
+    const necesita = valor * BigInt(total);
+    const ok = saldo >= necesita;
+    $("regla").classList.toggle("mal", !ok);
+    $("regla-texto").textContent = ok
+      ? "Todos los boletos tienen su plata."
+      : "La plata del contrato no alcanza para todos los boletos.";
+    $("regla-cuenta").textContent = `Hay ${xlm(saldo)} XLM y hacen falta ${xlm(necesita)} XLM (${total} boleto${total === 1 ? "" : "s"} × ${xlm(valor)} XLM).`;
+
+    $("d-productor").innerHTML = `<a href="${EXPERT}/account/${datos.productor}">${corto(datos.productor)}</a>`;
+    $("d-medidor").innerHTML = `<a href="${EXPERT}/account/${datos.medidor}">${corto(datos.medidor)}</a>`;
+    $("d-moneda").innerHTML = datos.moneda === XLM_SAC
+      ? `XLM, la moneda de Stellar (<a class="mono" href="${EXPERT}/contract/${datos.moneda}">${corto(datos.moneda)}</a>)`
+      : `<a class="mono" href="${EXPERT}/contract/${datos.moneda}">${corto(datos.moneda)}</a>`;
+
+    $("actualizado").textContent = `Leído de la red: ${new Date().toLocaleTimeString("es-CR", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}`;
+  }
+
+  // Lee los eventos de los últimos días, de a páginas.
+  async function leerEventos() {
+    const ultimo = (await servidor.getLatestLedger()).sequence;
+    let pedido = { startLedger: Math.max(ultimo - 120_000, 2), filters: [{ type: "contract", contractIds: [CONTRATO] }], limit: 100 };
+    const eventos = [];
+    for (let pagina = 0; pagina < 40; pagina++) {
+      const r = await servidor.getEvents(pedido);
+      eventos.push(...r.events);
+      if (!r.cursor) break;
+      const hasta = Number(BigInt(r.cursor.split("-")[0]) >> 32n);
+      if (hasta >= r.latestLedger - 1 && r.events.length < 100) break;
+      pedido = { cursor: r.cursor, filters: pedido.filters, limit: 100 };
+    }
+    return eventos.map((ev) => {
+      const tema = ev.topic.map((t) => S.scValToNative(t));
+      const v = S.scValToNative(ev.value);
+      const quien = tema[1] ? corto(tema[1]) : "";
+      const n = v.boletos;
+      const s = n === 1 ? "" : "s";
+      const base = { hash: ev.txHash, fecha: ev.ledgerClosedAt };
+      switch (tema[0]) {
+        case "cargado": return { ...base, tipo: "cargar", texto: `El productor carga ${n} boleto${s}`, detalle: "" };
+        case "entregado": return { ...base, tipo: "entregar", texto: `El medidor entrega ${n} boleto${s} a ${quien}`, detalle: `Entrega número ${v.numero}` };
+        case "cobrado": return { ...base, tipo: "cobrar", texto: `Se cobran ${n} boleto${s} para ${quien}`, detalle: `Le llegan ${xlm(v.monto)} XLM` };
+        case "retirado": return { ...base, tipo: "retirar", texto: `El productor retira ${n} boleto${s}`, detalle: "" };
+        default: return null;
+      }
+    }).filter(Boolean);
+  }
+
+  function pintarHistoria(vivos) {
+    const porHash = new Map(PRUEBA.map((p) => [p.hash, p]));
+    for (const e of vivos) if (!porHash.has(e.hash)) porHash.set(e.hash, e);
+    const lista = [...porHash.values()].sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
+    $("historia").innerHTML = lista.map((e) => `
+      <li class="aparece">
+        <span class="marca m-${e.tipo}">${icono(e.tipo)}</span>
+        <div><div class="t">${e.texto}</div><div class="q">${fecha(e.fecha)}${e.detalle ? " · " + e.detalle : ""}</div></div>
+        <a class="tx" href="${EXPERT}/tx/${e.hash}">${e.hash.slice(0, 8)} ↗</a>
+      </li>`).join("");
+  }
+
+  async function actualizar() {
+    const boton = $("refrescar");
+    boton.disabled = true;
+    try {
+      if (!cliente) await conectar();
+      pintarEstado(await leerEstado());
+      vivo(true, 'En vivo<span class="texto-largo"> · Testnet</span>');
+    } catch (err) {
+      console.error(err);
+      vivo(false, "Sin conexión");
+      $("actualizado").textContent = "No se pudo leer la red. Probá de nuevo en un rato.";
+    } finally {
+      boton.disabled = false;
+    }
+    try {
+      pintarHistoria(await leerEventos());
+    } catch (err) {
+      console.error(err);
+      pintarHistoria([]);
+    }
+  }
+
+  async function consultar(cuenta) {
+    const caja = $("respuesta");
+    caja.classList.add("ver");
+    cuenta = cuenta.trim();
+    if (!S.StrKey.isValidEd25519PublicKey(cuenta) && !S.StrKey.isValidContract(cuenta)) {
+      caja.innerHTML = "Esa no parece una cuenta de Stellar. Empieza con G y tiene 56 letras y números.";
+      return;
+    }
+    caja.innerHTML = '<span class="cargando">Consultando…</span>';
+    try {
+      if (!cliente) await conectar();
+      const n = (await cliente.boletos({ recolector: cuenta })).result;
+      caja.innerHTML = n === 0
+        ? `<b>0</b> boletos sin cobrar.<div class="chico">Si tuvo boletos, ya los cobró.</div>`
+        : `<b>${n}</b> boleto${n === 1 ? "" : "s"} sin cobrar, con su plata apartada.`;
+    } catch (err) {
+      console.error(err);
+      caja.innerHTML = "No se pudo consultar la red. Probá de nuevo en un rato.";
+    }
+  }
+
+  $("refrescar").addEventListener("click", actualizar);
+  $("consulta").addEventListener("submit", (e) => { e.preventDefault(); consultar($("cuenta").value); });
+  $("rosa").addEventListener("click", () => { $("cuenta").value = ROSA; consultar(ROSA); });
+
+  actualizar();
+  setInterval(() => { if (!document.hidden) actualizar(); }, 60_000);
+})();
+</script>
+</body>
+</html>

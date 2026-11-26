@@ -13,6 +13,7 @@
 </p>
 
 <p align="center">
+  <a href="https://jfacundoayala.github.io/boleto-lleno/"><b>Ver en vivo</b></a> ·
   <a href="#el-problema">Problema</a> ·
   <a href="#la-solución">Solución</a> ·
   <a href="#cómo-funciona">Cómo funciona</a> ·
@@ -177,6 +178,9 @@ con boletos de 2 XLM.
 [activó su cuenta](https://stellar.expert/explorer/testnet/account/GCG32KQZE7FK4TDWGQGXYO3QMOBFPWEJMYM7XH7JYNAKZJ36VF223VSH)
 con 6 XLM. Los rechazos no tienen link porque la red los frena antes de mandarlos.
 
+En la [web del proyecto](https://jfacundoayala.github.io/boleto-lleno/) se ve cómo está el
+contrato ahora, leído en vivo de Testnet.
+
 <details>
 <summary><b>Ver cómo quedó el contrato</b></summary>
 
@@ -219,6 +223,7 @@ boleto-lleno
 │   ├── lib.rs     el contrato
 │   └── test.rs    los tests
 ├── assets         la portada
+├── docs           la web que lee el contrato en vivo
 └── Cargo.toml     la configuración
 ```
 
