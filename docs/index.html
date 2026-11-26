@@ -246,7 +246,7 @@
     <div class="numeros">
       <div class="numero verde"><b id="n-libres"><span class="esqueleto">0</span></b><small>boletos libres, con plata</small></div>
       <div class="numero cafe"><b id="n-entregados"><span class="esqueleto">0</span></b><small>entregados, sin cobrar</small></div>
-      <div class="numero"><b id="n-valor"><span class="esqueleto">0</span></b><small>XLM vale un boleto</small></div>
+      <div class="numero"><b id="n-valor"><span class="esqueleto">0</span></b><small>XLM vale cada boleto</small></div>
       <div class="numero"><b id="n-saldo"><span class="esqueleto">0</span></b><small>XLM guardados en el contrato</small></div>
     </div>
 
@@ -280,7 +280,7 @@
       <p class="sub">Cada paso lo firma la persona que corresponde.</p>
       <ol class="pasos">
         <li><span class="n">1</span><div><code>cargar</code><p>El productor guarda la plata de los boletos.</p></div></li>
-        <li><span class="n">2</span><div><code>entregar</code><p>El medidor le da boletos a quien coge café, solo si tienen plata.</p></div></li>
+        <li><span class="n">2</span><div><code>entregar</code><p>El medidor, que mide el café, le da boletos a quien lo coge, solo si tienen plata.</p></div></li>
         <li><span class="n">3</span><div><code>cobrar</code><p>Cualquiera lo puede pedir, pero la plata solo le llega al recolector.</p></div></li>
         <li><span class="n">4</span><div><code>retirar</code><p>El productor saca la plata de los boletos que nadie tiene.</p></div></li>
         <li><span class="n">5</span><div><code>cambiar_medidor</code><p>El productor pone otro medidor, por ejemplo si se le perdió la clave.</p></div></li>
@@ -521,11 +521,13 @@
       console.error(err);
       vivo(false, "Sin conexión");
       $("actualizado").textContent = "No se pudo leer la red. Intente de nuevo en un ratito.";
+      if (!valorBoleto) $("regla-texto").textContent = "Todavía no se pudo leer el contrato.";
     }
     try {
       pintarHistoria(servidor ? await leerEventos() : undefined);
     } catch (err) {
       console.error(err);
+      cursor = null; // si el cursor venció, la próxima vez se lee de nuevo
       pintarHistoria();
     } finally {
       boton.disabled = false;

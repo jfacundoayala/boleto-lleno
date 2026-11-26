@@ -153,8 +153,9 @@ if boletos > estado.libres {
 - No anula un boleto mal entregado ni revisa que la cuenta del recolector esté bien escrita.
 - Si el productor pierde su clave, no hay arreglo.
 - No paga en colones y el XLM cambia de precio. No alcanza para cumplir la ley por sí solo.
-- Si un recolector no cobra en 120 días, sus boletos se archivan. La plata no se pierde,
-  pero hay que restaurarlos antes de cobrar.
+- No devuelve la plata que alguien mande por fuera de `cargar`.
+- Si pasan 120 días sin movimientos, la red archiva los boletos y el contrato. La plata no
+  se pierde, pero hay que restaurarlos antes de seguir.
 
 > [!NOTE]
 > Es una práctica en Testnet y no tiene auditoría profesional.
