@@ -3,10 +3,10 @@
 #![no_std]
 
 mod constants;
-pub mod contract;
-pub mod errors;
+mod contract;
+mod errors;
 mod events;
-pub mod model;
+mod model;
 mod storage;
 
 #[cfg(test)]
@@ -16,6 +16,3 @@ pub use contract::{BoletoLleno, BoletoLlenoClient, BoletoLlenoInterface};
 pub use errors::Error;
 pub use events::{Cargado, Cobrado, Entregado, MedidorCambiado, Retirado};
 pub use model::{Datos, Estado};
-
-#[cfg(test)]
-use {constants::DIA, storage::DataKey};

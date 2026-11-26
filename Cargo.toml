@@ -1,10 +1,11 @@
 [package]
 name = "boleto-lleno"
-version = "2.0.0"
+version = "3.0.0"
 edition = "2021"
 description = "Un boleto de café que solo se entrega si su plata ya está apartada"
 license = "MIT"
 repository = "https://github.com/jfacundoayala/boleto-lleno"
+homepage = "https://jfacundoayala.github.io/boleto-lleno/"
 readme = "README.md"
 publish = false
 
@@ -21,9 +22,7 @@ soroban-sdk = { version = "28.0.0", features = ["testutils"] }
 [profile.release]
 opt-level = "z"
 overflow-checks = true  # una suma que se desborda hace fallar el contrato, en vez de dar la vuelta
-debug = 0
 strip = "symbols"
-debug-assertions = false
 panic = "abort"
 codegen-units = 1
 lto = true

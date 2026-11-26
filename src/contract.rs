@@ -4,7 +4,7 @@ use soroban_sdk::{
     contract, contractimpl, contractmeta, panic_with_error, token, Address, Bytes, Env,
 };
 
-use crate::constants::{VALOR_MAXIMO, VALOR_MINIMO, XLM};
+use crate::constants::{ACTIVO_XLM, VALOR_MAXIMO, VALOR_MINIMO};
 use crate::errors::Error;
 use crate::events::{Cargado, Cobrado, Entregado, MedidorCambiado, Retirado};
 use crate::model::{Datos, Estado};
@@ -32,10 +32,13 @@ pub trait BoletoLlenoInterface {
     /// El productor pone otro medidor (por ejemplo si perdió la clave).
     fn cambiar_medidor(env: Env, medidor: Address) -> Result<(), Error>;
 
+    /// Boletos sin cobrar de un recolector.
     fn boletos(env: Env, recolector: Address) -> u32;
 
+    /// Cuántos boletos hay libres y entregados.
     fn estado(env: Env) -> Estado;
 
+    /// Productor, medidor, moneda y valor del boleto.
     fn datos(env: Env) -> Datos;
 }
 
@@ -52,7 +55,7 @@ impl BoletoLleno {
             panic_with_error!(&env, Error::MedidorInvalido);
         }
         // la moneda es siempre XLM
-        let xlm = Bytes::from_array(&env, &XLM);
+        let xlm = Bytes::from_array(&env, &ACTIVO_XLM);
         let moneda = env.deployer().with_stellar_asset(xlm).deployed_address();
         storage::guardar_datos(&env, &Datos { productor, medidor, moneda, valor });
         storage::guardar_estado(&env, &Estado { libres: 0, entregados: 0, ultima: 0 });
@@ -78,10 +81,11 @@ impl BoletoLlenoInterface for BoletoLleno {
 
     fn entregar(env: Env, numero: u32, recolector: Address, boletos: u32) -> Result<(), Error> {
         storage::leer_datos(&env).medidor.require_auth();
-        let mut estado = storage::leer_estado(&env);
         if boletos == 0 {
             return Err(Error::CantidadInvalida);
         }
+
+        let mut estado = storage::leer_estado(&env);
         if numero != estado.ultima + 1 {
             return Err(Error::NumeroInvalido);
         }
@@ -124,10 +128,11 @@ impl BoletoLlenoInterface for BoletoLleno {
     fn retirar(env: Env, boletos: u32) -> Result<(), Error> {
         let datos = storage::leer_datos(&env);
         datos.productor.require_auth();
-        let mut estado = storage::leer_estado(&env);
         if boletos == 0 {
             return Err(Error::CantidadInvalida);
         }
+
+        let mut estado = storage::leer_estado(&env);
         if boletos > estado.libres {
             return Err(Error::SinLibres);
         }
