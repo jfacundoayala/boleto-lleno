@@ -1,3 +1,5 @@
+//! Quién puede firmar cada cosa.
+
 use super::*;
 use crate::{BoletoLleno, BoletoLlenoClient, Error};
 use soroban_sdk::testutils::Address as _;

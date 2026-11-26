@@ -1,3 +1,5 @@
+//! Lo que comparten los tests: el contrato armado y las firmas.
+
 extern crate std;
 
 mod azar;

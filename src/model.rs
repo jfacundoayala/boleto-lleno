@@ -1,3 +1,5 @@
+//! Los datos que guarda el contrato.
+
 use soroban_sdk::{contracttype, Address};
 
 #[contracttype]

@@ -1,3 +1,5 @@
+//! Lo que el contrato rechaza.
+
 use super::*;
 use crate::constants::{VALOR_MAXIMO, VALOR_MINIMO};
 use crate::{BoletoLleno, BoletoLlenoClient, Error};

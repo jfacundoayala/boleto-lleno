@@ -1,3 +1,5 @@
+//! El camino completo y el cobro.
+
 use super::*;
 use crate::constants::VALOR_MINIMO;
 use crate::{BoletoLleno, BoletoLlenoClient, Error, Estado};

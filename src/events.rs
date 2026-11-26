@@ -1,3 +1,5 @@
+//! Eventos que deja cada movimiento.
+
 use soroban_sdk::{contractevent, Address};
 
 #[contractevent]
