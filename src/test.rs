@@ -1,4 +1,4 @@
-//! Los tests del contrato. Se corren con `cargo test`.
+// cargo test
 extern crate std;
 
 use super::*;
@@ -25,7 +25,7 @@ struct Prueba {
     luis: Address, // recolector
 }
 
-// El contrato de XLM de la red de prueba. Es el mismo que el contrato calcula solo.
+// el contrato de XLM de la red de prueba
 fn crear_xlm(env: &Env) -> Address {
     let crear = xdr::HostFunction::CreateContract(xdr::CreateContractArgs {
         contract_id_preimage: xdr::ContractIdPreimage::Asset(xdr::Asset::Native),
@@ -34,8 +34,7 @@ fn crear_xlm(env: &Env) -> Address {
     env.host().invoke_function(crear).unwrap().try_into_val(env).unwrap()
 }
 
-// XLM no se puede "imprimir" como una moneda de prueba, así que se crea una cuenta
-// con saldo directo en el ledger de prueba.
+// XLM no tiene mint: se crea la cuenta con saldo en el ledger de prueba
 fn cuenta_con_xlm(env: &Env, semilla: u8, stroops: i128) -> Address {
     let id = xdr::AccountId(xdr::PublicKey::PublicKeyTypeEd25519(xdr::Uint256([semilla; 32])));
     let clave = Rc::new(xdr::LedgerKey::Account(xdr::LedgerKeyAccount { account_id: id.clone() }));
@@ -59,14 +58,13 @@ fn cuenta_con_xlm(env: &Env, semilla: u8, stroops: i128) -> Address {
     Address::try_from_val(env, &xdr::ScAddress::Account(id)).unwrap()
 }
 
-// Arma todo: XLM, el contrato y el productor con 100 boletos de plata.
+// XLM, el contrato y un productor con plata para 100 boletos
 fn setup() -> Prueba {
     let env = Env::default();
     env.mock_all_auths(); // todos firman
 
     let xlm = crear_xlm(&env);
-    // La plata sale de una cuenta común y pasa al productor. El productor de la prueba
-    // es una dirección generada, así se puede probar quién firma y quién no.
+    // el productor es una dirección generada para poder simular sus firmas
     let banco = cuenta_con_xlm(&env, 1, PLATA_INICIAL);
     let productor = Address::generate(&env);
     TokenClient::new(&env, &xlm).transfer(&banco, &productor, &PLATA_INICIAL);
@@ -233,8 +231,7 @@ fn no_se_cobra_dos_veces() {
     assert_eq!(p.xlm.balance(&p.rosa), 2 * VALOR);
 }
 
-// Como en la red de verdad: Rosa no tiene cuenta y hay reserva mínima (0,5 XLM).
-// El cobro le crea la cuenta (CAP-73) porque un boleto vale al menos 1 XLM.
+// Rosa no tiene cuenta y hay reserva de 0,5 XLM: el cobro se la crea (CAP-73)
 #[test]
 fn el_cobro_crea_la_cuenta_de_quien_no_tenia() {
     let p = setup();
@@ -278,7 +275,6 @@ fn un_boleto_de_1_xlm_justo_sirve() {
     assert_eq!(BoletoLlenoClient::new(&p.env, &id).datos().valor, justo);
 }
 
-// Hay un tope de 10 000 XLM por boleto, así las cuentas nunca se pasan.
 #[test]
 #[should_panic(expected = "Error(Contract, #1)")]
 fn un_boleto_de_mas_de_10_000_xlm_falla() {
@@ -340,7 +336,6 @@ fn el_contrato_no_puede_ser_recolector() {
 
 // 5. la moneda
 
-// Nadie elige la moneda al desplegar: el contrato usa la dirección de XLM de la red.
 #[test]
 fn la_moneda_siempre_es_xlm() {
     let p = setup();
@@ -396,7 +391,7 @@ fn con_una_sola_cuenta_lo_entregado_sigue_protegido() {
 
 // 7. cambiar al medidor
 
-// Si al medidor le roban la clave, el productor pone otro y el viejo ya no entrega.
+// le roban la clave al medidor: el productor pone otro
 #[test]
 fn el_productor_cambia_al_medidor() {
     let p = setup();
@@ -415,7 +410,6 @@ fn el_productor_cambia_al_medidor() {
     assert_eq!(p.contrato.boletos(&p.luis), 1);
 }
 
-// El contrato no puede ser medidor: nadie podría entregar.
 #[test]
 fn el_contrato_no_puede_ser_medidor() {
     let p = setup();
@@ -496,18 +490,13 @@ fn renueva_el_ttl() {
     assert_eq!(vida(), (2_073_600, 2_073_600));
 }
 
-// 9. miles de pasos al azar
-//
-// Se juega con el contrato al azar y, en paralelo, se lleva la cuenta en un modelo
-// simple. Después de cada paso, el contrato y el modelo tienen que coincidir y la
-// plata tiene que alcanzar justo para todos los boletos. Las semillas son fijas,
-// así que si algo falla se puede repetir igual.
+// 9. pasos al azar contra un modelo (semillas fijas, se puede repetir)
 
 struct Azar(u64);
 
 impl Azar {
     fn hasta(&mut self, n: u32) -> u32 {
-        // xorshift64: alcanza para elegir pasos, no es para criptografía
+        // xorshift64
         self.0 ^= self.0 << 13;
         self.0 ^= self.0 >> 7;
         self.0 ^= self.0 << 17;
@@ -585,18 +574,16 @@ fn al_azar_el_contrato_y_las_cuentas_siempre_coinciden() {
                 }
             }
 
-            // el contrato dice lo mismo que el modelo
             let entregados: u32 = suyos.iter().sum();
             assert_eq!(p.contrato.estado(), Estado { libres, entregados, ultima });
             for (i, quien) in recolectores.iter().enumerate() {
                 assert_eq!(p.contrato.boletos(quien), suyos[i]);
                 assert_eq!(p.xlm.balance(quien), cobrado[i]);
             }
-            // la plata alcanza justo para todos los boletos, ni más ni menos
             let en_contrato = p.xlm.balance(&p.contrato.address);
             assert_eq!(en_contrato, VALOR * i128::from(libres + entregados));
             assert_eq!(p.xlm.balance(&p.productor), del_productor);
-            // y no se crea ni se pierde plata
+            // no se crea ni se pierde plata
             assert_eq!(del_productor + en_contrato + cobrado.iter().sum::<i128>(), PLATA_INICIAL);
         }
     }

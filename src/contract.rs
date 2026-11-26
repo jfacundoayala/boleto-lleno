@@ -1,7 +1,4 @@
-//! Las funciones públicas del contrato.
-//!
-//! La interfaz (`BoletoLlenoInterface`) dice qué hace cada función y quién firma.
-//! Abajo está la implementación.
+//! Funciones públicas del contrato.
 
 use soroban_sdk::{
     contract, contractimpl, contractmeta, panic_with_error, token, Address, Bytes, Env,
@@ -18,41 +15,27 @@ contractmeta!(
     val = "Boleto Lleno: un boleto de cafe que solo se entrega si su plata ya esta apartada"
 );
 
-/// Lo que se puede hacer con el contrato.
-///
-/// Regla que no se rompe: la plata del contrato alcanza para todos los boletos,
-/// los libres y los entregados.
 pub trait BoletoLlenoInterface {
-    /// Paso 1: El productor aparta la plata de esa cantidad de boletos. Firma el productor.
-    /// Falla con `CantidadInvalida` si son 0.
+    /// El productor aparta la plata de los boletos.
     fn cargar(env: Env, boletos: u32) -> Result<(), Error>;
 
-    /// Paso 2: El medidor entrega boletos por el café medido, solo si tienen plata.
-    /// Firma el medidor. El número va de a uno: repetir el envío no entrega dos veces.
-    /// Falla con `CantidadInvalida`, `NumeroInvalido`, `RecolectorInvalido` o `SinLibres`.
+    /// El medidor da boletos a un recolector, solo si hay libres.
+    /// `numero` va de a uno, así una entrega repetida no cuenta dos veces.
     fn entregar(env: Env, numero: u32, recolector: Address, boletos: u32) -> Result<(), Error>;
 
-    /// Paso 3: Cambia por plata todos los boletos de un recolector y devuelve cuánto cobró.
-    /// No pide firma: la plata solo puede ir al recolector, la pida quien la pida.
-    /// Falla con `NadaParaCobrar` si no tiene boletos.
+    /// Paga los boletos del recolector. Lo puede pedir cualquiera.
     fn cobrar(env: Env, recolector: Address) -> Result<i128, Error>;
 
-    /// Paso 4: El productor recupera la plata de boletos libres. Los entregados no se tocan.
-    /// Firma el productor. Falla con `CantidadInvalida` o `SinLibres`.
+    /// El productor saca la plata de boletos libres.
     fn retirar(env: Env, boletos: u32) -> Result<(), Error>;
 
-    /// El productor cambia al medidor, por ejemplo si perdió o le robaron la clave.
-    /// Firma el productor. Los boletos ya entregados no cambian.
-    /// Falla con `MedidorInvalido` si el nuevo medidor es el propio contrato.
+    /// El productor pone otro medidor (por ejemplo si perdió la clave).
     fn cambiar_medidor(env: Env, medidor: Address) -> Result<(), Error>;
 
-    /// Cuántos boletos sin cobrar tiene un recolector. Todos tienen su plata.
     fn boletos(env: Env, recolector: Address) -> u32;
 
-    /// Cuántos boletos hay libres y entregados, y el número de la última entrega.
     fn estado(env: Env) -> Estado;
 
-    /// Quiénes son el productor y el medidor, la moneda (XLM) y cuánto vale un boleto.
     fn datos(env: Env) -> Datos;
 }
 
@@ -61,8 +44,6 @@ pub struct BoletoLleno;
 
 #[contractimpl]
 impl BoletoLleno {
-    /// Corre una sola vez, al desplegar: fija los roles y el valor. La moneda es XLM.
-    /// Falla con `ValorInvalido` (menos de 1 o más de 10 000 XLM) o `MedidorInvalido`.
     pub fn __constructor(env: Env, productor: Address, medidor: Address, valor: i128) {
         if !(VALOR_MINIMO..=VALOR_MAXIMO).contains(&valor) {
             panic_with_error!(&env, Error::ValorInvalido);
@@ -70,7 +51,7 @@ impl BoletoLleno {
         if medidor == env.current_contract_address() {
             panic_with_error!(&env, Error::MedidorInvalido);
         }
-        // La dirección del contrato de XLM en esta red. Nadie la puede cambiar por otra moneda.
+        // la moneda es siempre XLM
         let xlm = Bytes::from_array(&env, &XLM);
         let moneda = env.deployer().with_stellar_asset(xlm).deployed_address();
         storage::guardar_datos(&env, &Datos { productor, medidor, moneda, valor });
@@ -82,7 +63,7 @@ impl BoletoLleno {
 impl BoletoLlenoInterface for BoletoLleno {
     fn cargar(env: Env, boletos: u32) -> Result<(), Error> {
         let datos = storage::leer_datos(&env);
-        datos.productor.require_auth(); // firma quien pone la plata
+        datos.productor.require_auth();
         if boletos == 0 {
             return Err(Error::CantidadInvalida);
         }
@@ -96,7 +77,7 @@ impl BoletoLlenoInterface for BoletoLleno {
     }
 
     fn entregar(env: Env, numero: u32, recolector: Address, boletos: u32) -> Result<(), Error> {
-        storage::leer_datos(&env).medidor.require_auth(); // firma quien midió
+        storage::leer_datos(&env).medidor.require_auth();
         let mut estado = storage::leer_estado(&env);
         if boletos == 0 {
             return Err(Error::CantidadInvalida);
@@ -111,7 +92,6 @@ impl BoletoLlenoInterface for BoletoLleno {
             return Err(Error::SinLibres); // acá está la idea: no hay boleto vacío
         }
 
-        // dejan de estar libres y quedan a nombre del recolector
         estado.libres -= boletos;
         estado.entregados += boletos;
         estado.ultima = numero;
@@ -173,7 +153,7 @@ impl BoletoLlenoInterface for BoletoLleno {
         Ok(())
     }
 
-    // Consultas: solo leen, no piden firma
+    // consultas
 
     fn boletos(env: Env, recolector: Address) -> u32 {
         storage::leer_boletos(&env, &recolector)
@@ -188,7 +168,6 @@ impl BoletoLlenoInterface for BoletoLleno {
     }
 }
 
-// Mueve la plata de esa cantidad de boletos. Devuelve el monto.
 fn mover(env: &Env, datos: &Datos, de: &Address, para: &Address, boletos: u32) -> i128 {
     let monto = datos.valor * i128::from(boletos);
     token::TokenClient::new(env, &datos.moneda).transfer(de, para, &monto);

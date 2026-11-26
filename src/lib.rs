@@ -1,14 +1,4 @@
-//! Boleto Lleno
-//!
-//! Un boleto de café que no se puede entregar vacío: solo se entrega si su plata
-//! ya está apartada, y el productor ya no la puede sacar.
-//!
-//! 1. `cargar`: el productor aparta plata para N boletos.
-//! 2. `entregar`: el medidor da boletos por el café medido.
-//! 3. `cobrar`: los boletos se cambian por plata para el recolector.
-//! 4. `retirar`: el productor recupera solo lo que no se entregó.
-//!
-//! Además el productor puede cambiar al medidor. La moneda es siempre XLM.
+//! Boleto Lleno: un boleto de café que solo se entrega si su plata ya está apartada.
 
 #![no_std]
 
