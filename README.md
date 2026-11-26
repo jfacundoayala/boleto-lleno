@@ -59,9 +59,6 @@ la de los otros 2.
 El boleto de café es una promesa de pago y un contrato puede cambiar esa promesa por plata
 que ya está apartada. Además es un problema pequeño y se entiende con pocas acciones.
 
-No hablé con recolectores ni con productores. Falta preguntarles si usarían una billetera
-y cómo pasarían la plata a colones.
-
 ## Cómo funciona
 
 ```mermaid
@@ -139,7 +136,7 @@ entregados.
 - No paga en colones y el XLM cambia de precio. No alcanza para cumplir la ley por sí solo.
 - No devuelve la plata que alguien mande por fuera de `cargar`.
 - Si un recolector pasa mucho sin recibir boletos (entre 30 y 120 días), la red archiva
-  los suyos. La plata no se pierde, pero hay que restaurarlos antes de cobrar.
+  los suyos. La plata no se pierde: el cobro los restaura solo, con una comisión un poco mayor.
 
 Es una práctica en Testnet y no tiene auditoría profesional.
 

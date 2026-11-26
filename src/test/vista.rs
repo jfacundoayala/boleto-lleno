@@ -72,3 +72,14 @@ fn renueva_el_ttl() {
     p.contrato.entregar(&2, &p.rosa, &1);
     assert_eq!(vida(), (TTL_ESTIRAR_HASTA, TTL_ESTIRAR_HASTA));
 }
+
+// Pasados los 120 días la red archiva los boletos. El cobro los restaura solo.
+#[test]
+fn un_boleto_archivado_se_cobra_igual() {
+    let p = preparar();
+    p.contrato.cargar(&5);
+    p.contrato.entregar(&1, &p.rosa, &3);
+    p.env.ledger().with_mut(|l| l.sequence_number += 121 * DIA);
+    assert_eq!(p.contrato.cobrar(&p.rosa), 3 * VALOR);
+    assert!(p.lleno());
+}

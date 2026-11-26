@@ -142,3 +142,16 @@ fn cualquiera_puede_pedir_el_cobro_pero_le_llega_al_recolector() {
     assert_eq!(p.xlm.balance(&p.rosa), 2 * VALOR);
     assert_eq!(p.xlm.balance(&p.contrato.address), 3 * VALOR); // y no salió nada más
 }
+
+// El productor y el medidor también pueden recibir boletos, como cualquiera.
+#[test]
+fn el_productor_y_el_medidor_pueden_ser_recolectores() {
+    let p = preparar();
+    p.contrato.cargar(&5);
+    p.contrato.entregar(&1, &p.productor, &2);
+    p.contrato.entregar(&2, &p.medidor, &1);
+    assert_eq!(p.contrato.try_retirar(&3), Err(Ok(Error::SinLibres)));
+    assert_eq!(p.contrato.cobrar(&p.productor), 2 * VALOR);
+    assert_eq!(p.contrato.cobrar(&p.medidor), VALOR);
+    assert!(p.lleno());
+}

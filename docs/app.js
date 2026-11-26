@@ -122,6 +122,7 @@
   // guarda la red (unos 7 días). Después solo lo nuevo, desde el último cursor.
   const FILTRO = [{ type: "contract", contractIds: [CONTRATO] }];
   const vistos = new Map(PRUEBA.map((p) => [p.hash, p]));
+  const fijos = new Set(PRUEBA.map((p) => p.hash));
   let cursor = null;
   let valorBoleto = null;
 
@@ -158,7 +159,8 @@
       const r = await servidor.getEvents(pedido);
       for (const ev of r.events) {
         const e = traducir(ev);
-        if (e && !vistos.has(e.hash)) { vistos.set(e.hash, e); nuevos.push(e.hash); }
+        // por evento y no por transacción: una sola puede traer varios cobros
+        if (e && !fijos.has(e.hash) && !vistos.has(ev.id)) { vistos.set(ev.id, { ...e, id: ev.id }); nuevos.push(ev.id); }
       }
       if (!r.cursor) break;
       cursor = r.cursor;
@@ -173,7 +175,7 @@
   function pintarHistoria(nuevos = new Set()) {
     const lista = [...vistos.values()].sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
     $("historia").innerHTML = lista.map((e) => `
-      <li${nuevos.has(e.hash) ? ' class="aparece"' : ""}>
+      <li${nuevos.has(e.id) ? ' class="aparece"' : ""}>
         <span class="marca m-${e.tipo}">${icono(e.tipo)}</span>
         <div><div class="t">${e.texto}</div><div class="q">${fecha(e.fecha)}${e.detalle ? " · " + e.detalle : ""}</div></div>
         <a class="tx" href="${EXPERT}/tx/${e.hash}" aria-label="Ver la transacción ${e.hash.slice(0, 8)}">${e.hash.slice(0, 8)} ↗</a>
