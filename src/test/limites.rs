@@ -74,3 +74,13 @@ fn el_contrato_no_puede_ser_recolector() {
     let r = p.contrato.try_entregar(&1, &p.contrato.address, &1);
     assert_eq!(r, Err(Ok(Error::RecolectorInvalido)));
 }
+
+// Una carga imposible falla entera, sin tocar la cuenta de boletos.
+#[test]
+fn una_carga_gigante_falla_sin_cambiar_nada() {
+    let p = preparar();
+    p.contrato.cargar(&1);
+    assert!(p.contrato.try_cargar(&u32::MAX).is_err());
+    assert_eq!(p.contrato.estado().libres, 1);
+    assert!(p.lleno());
+}
