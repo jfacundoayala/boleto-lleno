@@ -63,7 +63,11 @@ fn setup() -> Prueba {
     env.mock_all_auths(); // todos firman
 
     let xlm = crear_xlm(&env);
-    let productor = cuenta_con_xlm(&env, 1, PLATA_INICIAL);
+    // La plata sale de una cuenta común y pasa al productor. El productor de la prueba
+    // es una dirección generada, así se puede probar quién firma y quién no.
+    let banco = cuenta_con_xlm(&env, 1, PLATA_INICIAL);
+    let productor = Address::generate(&env);
+    TokenClient::new(&env, &xlm).transfer(&banco, &productor, &PLATA_INICIAL);
     let medidor = Address::generate(&env);
     let id = env.register(BoletoLleno, (&productor, &medidor, VALOR));
 
@@ -227,6 +231,21 @@ fn no_se_cobra_dos_veces() {
     assert_eq!(p.xlm.balance(&p.rosa), 2 * VALOR);
 }
 
+// Como en la red de verdad: Rosa no tiene cuenta y hay reserva mínima (0,5 XLM).
+// El cobro le crea la cuenta (CAP-73) porque un boleto vale al menos 1 XLM.
+#[test]
+fn el_cobro_crea_la_cuenta_de_quien_no_tenia() {
+    let p = setup();
+    p.env.ledger().set_base_reserve(5_000_000);
+    let id = xdr::AccountId(xdr::PublicKey::PublicKeyTypeEd25519(xdr::Uint256([7; 32])));
+    let rosa = Address::try_from_val(&p.env, &xdr::ScAddress::Account(id)).unwrap();
+
+    p.contrato.cargar(&5);
+    p.contrato.entregar(&1, &rosa, &3);
+    assert_eq!(p.contrato.cobrar(&rosa), 3 * VALOR);
+    assert_eq!(p.xlm.balance(&rosa), 3 * VALOR);
+}
+
 // Sin ninguna firma, la plata llega igual a Rosa y a nadie más.
 #[test]
 fn cualquiera_puede_pedir_el_cobro_pero_le_llega_al_recolector() {
@@ -253,6 +272,23 @@ fn un_boleto_de_menos_de_1_xlm_falla() {
 fn un_boleto_de_1_xlm_justo_sirve() {
     let p = setup();
     let justo = 10_000_000i128;
+    let id = p.env.register(BoletoLleno, (&p.productor, &p.medidor, justo));
+    assert_eq!(BoletoLlenoClient::new(&p.env, &id).datos().valor, justo);
+}
+
+// Hay un tope de 10 000 XLM por boleto, así las cuentas nunca se pasan.
+#[test]
+#[should_panic(expected = "Error(Contract, #1)")]
+fn un_boleto_de_mas_de_10_000_xlm_falla() {
+    let p = setup();
+    let mas = 100_000_000_001i128;
+    p.env.register(BoletoLleno, (&p.productor, &p.medidor, mas));
+}
+
+#[test]
+fn un_boleto_de_10_000_xlm_justo_sirve() {
+    let p = setup();
+    let justo = 100_000_000_000i128;
     let id = p.env.register(BoletoLleno, (&p.productor, &p.medidor, justo));
     assert_eq!(BoletoLlenoClient::new(&p.env, &id).datos().valor, justo);
 }
@@ -289,6 +325,7 @@ fn los_errores_tienen_numero_fijo() {
     assert_eq!(Error::NumeroInvalido as u32, 4);
     assert_eq!(Error::RecolectorInvalido as u32, 5);
     assert_eq!(Error::NadaParaCobrar as u32, 6);
+    assert_eq!(Error::MedidorInvalido as u32, 7);
 }
 
 #[test]
@@ -376,6 +413,15 @@ fn el_productor_cambia_al_medidor() {
     assert_eq!(p.contrato.boletos(&p.luis), 1);
 }
 
+// El contrato no puede ser medidor: nadie podría entregar.
+#[test]
+fn el_contrato_no_puede_ser_medidor() {
+    let p = setup();
+    let r = p.contrato.try_cambiar_medidor(&p.contrato.address);
+    assert_eq!(r, Err(Ok(Error::MedidorInvalido)));
+    assert_eq!(p.contrato.datos().medidor, p.medidor);
+}
+
 #[test]
 fn el_medidor_no_se_puede_cambiar_solo() {
     let p = setup();
@@ -423,7 +469,8 @@ fn cada_paso_avisa_con_un_evento() {
 
     let nuevo = Address::generate(&p.env);
     p.contrato.cambiar_medidor(&nuevo);
-    assert_eq!(avisos(), std::vec![MedidorCambiado { medidor: nuevo }.to_xdr(&p.env, id)]);
+    let m = MedidorCambiado { anterior: p.medidor.clone(), medidor: nuevo };
+    assert_eq!(avisos(), std::vec![m.to_xdr(&p.env, id)]);
 }
 
 // La primera entrega deja 2 073 600 ledgers de vida (120 días). Cuando quedan menos
@@ -470,7 +517,7 @@ impl Azar {
 fn al_azar_el_contrato_y_las_cuentas_siempre_coinciden() {
     for semilla in 1..=25u64 {
         let p = setup();
-        let mut azar = Azar(semilla * 0x9E37_79B9_7F4A_7C15);
+        let mut azar = Azar(semilla.wrapping_mul(0x9E37_79B9_7F4A_7C15));
         let recolectores = [p.rosa.clone(), p.luis.clone(), Address::generate(&p.env)];
         let (mut libres, mut ultima) = (0u32, 0u32);
         let mut suyos = [0u32; 3];

@@ -8,11 +8,34 @@
 //   4. retirar  - el productor recupera solo lo que no se entregó
 //
 // Además el productor puede cambiar al medidor. La moneda es siempre XLM.
+//
+// Archivos:
+//   lib.rs      el contrato y sus funciones públicas
+//   storage.rs  qué se guarda y cuánto dura (DataKey, get/set, TTL)
+//   errors.rs   los errores, con número fijo
+//   events.rs   los avisos públicos
+//   types.rs    Datos y Estado
+//   test.rs     los tests
 #![no_std]
 use soroban_sdk::{
-    contract, contracterror, contractevent, contractimpl, contractmeta, contracttype,
-    panic_with_error, token, Address, Bytes, Env,
+    contract, contractimpl, contractmeta, panic_with_error, token, Address, Bytes, Env,
 };
+
+mod errors;
+mod events;
+mod storage;
+mod types;
+
+#[cfg(test)]
+mod test;
+
+pub use errors::Error;
+pub use events::{Cargado, Cobrado, Entregado, MedidorCambiado, Retirado};
+pub use storage::DataKey;
+pub use types::{Datos, Estado};
+
+#[cfg(test)]
+use storage::DIA;
 
 contractmeta!(
     key = "Description",
@@ -20,86 +43,8 @@ contractmeta!(
 );
 
 const VALOR_MINIMO: i128 = 10_000_000; // 1 XLM: mínimo para activar una cuenta nueva, según CAP-73 (le queda de reserva)
-const DIA: u32 = 17_280; // ledgers en un día (uno cada ~5 segundos)
+const VALOR_MAXIMO: i128 = 100_000_000_000; // 10 000 XLM: tope para que las cuentas nunca se pasen
 const XLM: [u8; 4] = [0, 0, 0, 0]; // así se escribe "XLM" (Asset::Native) en el formato de la red
-
-// Las claves de lo que el contrato guarda, igual que en el contador.
-#[contracttype]
-#[derive(Clone)]
-pub enum DataKey {
-    Datos,            // lo que se fija al desplegar
-    Estado,           // cuántos boletos hay
-    Boletos(Address), // cuántos boletos sin cobrar tiene cada recolector
-}
-
-// Se fija al desplegar. No hay función para cambiarlo.
-#[contracttype]
-#[derive(Clone, Debug, Eq, PartialEq)]
-pub struct Datos {
-    pub productor: Address, // pone la plata
-    pub medidor: Address,   // mide el café y entrega los boletos (el productor lo puede cambiar)
-    pub moneda: Address,    // siempre XLM: la calcula el contrato, no se elige
-    pub valor: i128,        // cuánta plata vale un boleto
-}
-
-// Regla que no se rompe (con XLM): plata del contrato >= valor x (libres + entregados).
-#[contracttype]
-#[derive(Clone, Debug, Eq, PartialEq)]
-pub struct Estado {
-    pub libres: u32,     // con plata, todavía de nadie
-    pub entregados: u32, // con plata, ya son de un recolector y falta cobrarlos
-    pub ultima: u32,     // número de la última entrega (0 = ninguna)
-}
-
-// Los errores, con número fijo para reconocerlos desde afuera.
-#[contracterror]
-#[derive(Copy, Clone, Debug, Eq, PartialEq)]
-#[repr(u32)]
-pub enum Error {
-    ValorInvalido = 1,      // un boleto tiene que valer al menos 1 XLM
-    CantidadInvalida = 2,   // 0 boletos
-    SinLibres = 3,          // no hay tantos boletos con plata
-    NumeroInvalido = 4,     // esa entrega ya se hizo, o se saltó una
-    RecolectorInvalido = 5, // el contrato no puede ser recolector: la plata quedaría trabada
-    NadaParaCobrar = 6,
-}
-
-// Los avisos públicos. El topic sirve para filtrar por recolector.
-#[contractevent]
-#[derive(Clone, Debug, Eq, PartialEq)]
-pub struct Cargado {
-    pub boletos: u32,
-}
-
-#[contractevent]
-#[derive(Clone, Debug, Eq, PartialEq)]
-pub struct Entregado {
-    #[topic]
-    pub recolector: Address,
-    pub numero: u32,
-    pub boletos: u32,
-}
-
-#[contractevent]
-#[derive(Clone, Debug, Eq, PartialEq)]
-pub struct Cobrado {
-    #[topic]
-    pub recolector: Address,
-    pub boletos: u32,
-    pub monto: i128,
-}
-
-#[contractevent]
-#[derive(Clone, Debug, Eq, PartialEq)]
-pub struct Retirado {
-    pub boletos: u32,
-}
-
-#[contractevent]
-#[derive(Clone, Debug, Eq, PartialEq)]
-pub struct MedidorCambiado {
-    pub medidor: Address,
-}
 
 #[contract]
 pub struct BoletoLleno;
@@ -108,28 +53,30 @@ pub struct BoletoLleno;
 impl BoletoLleno {
     /// Corre una sola vez, al desplegar: fija los roles y el valor. La moneda es XLM.
     pub fn __constructor(env: Env, productor: Address, medidor: Address, valor: i128) {
-        if valor < VALOR_MINIMO {
+        if !(VALOR_MINIMO..=VALOR_MAXIMO).contains(&valor) {
             panic_with_error!(&env, Error::ValorInvalido);
+        }
+        if medidor == env.current_contract_address() {
+            panic_with_error!(&env, Error::MedidorInvalido);
         }
         // La dirección del contrato de XLM en esta red. Nadie la puede cambiar por otra moneda.
         let xlm = Bytes::from_array(&env, &XLM);
         let moneda = env.deployer().with_stellar_asset(xlm).deployed_address();
-        let datos = Datos { productor, medidor, moneda, valor };
-        env.storage().instance().set(&DataKey::Datos, &datos);
-        guardar(&env, &Estado { libres: 0, entregados: 0, ultima: 0 });
+        storage::guardar_datos(&env, &Datos { productor, medidor, moneda, valor });
+        storage::guardar_estado(&env, &Estado { libres: 0, entregados: 0, ultima: 0 });
     }
 
     /// 1. El productor aparta la plata de esa cantidad de boletos.
     pub fn cargar(env: Env, boletos: u32) -> Result<(), Error> {
-        let datos = Self::datos(env.clone());
+        let datos = storage::datos(&env);
         datos.productor.require_auth(); // firma quien pone la plata
         if boletos == 0 {
             return Err(Error::CantidadInvalida);
         }
 
-        let mut estado = Self::estado(env.clone());
+        let mut estado = storage::estado(&env);
         estado.libres += boletos;
-        guardar(&env, &estado);
+        storage::guardar_estado(&env, &estado);
         mover(&env, &datos, &datos.productor, &env.current_contract_address(), boletos);
         Cargado { boletos }.publish(&env);
         Ok(())
@@ -138,8 +85,8 @@ impl BoletoLleno {
     /// 2. El medidor entrega boletos por el café medido. Solo si tienen plata.
     ///    El número va de a uno: repetir el envío no entrega dos veces.
     pub fn entregar(env: Env, numero: u32, recolector: Address, boletos: u32) -> Result<(), Error> {
-        Self::datos(env.clone()).medidor.require_auth(); // firma quien midió
-        let mut estado = Self::estado(env.clone());
+        storage::datos(&env).medidor.require_auth(); // firma quien midió
+        let mut estado = storage::estado(&env);
         if boletos == 0 {
             return Err(Error::CantidadInvalida);
         }
@@ -157,12 +104,9 @@ impl BoletoLleno {
         estado.libres -= boletos;
         estado.entregados += boletos;
         estado.ultima = numero;
-        guardar(&env, &estado);
-
-        let suyos = Self::boletos(env.clone(), recolector.clone()) + boletos;
-        let clave = DataKey::Boletos(recolector.clone());
-        env.storage().persistent().set(&clave, &suyos);
-        env.storage().persistent().extend_ttl(&clave, 30 * DIA, 120 * DIA);
+        storage::guardar_estado(&env, &estado);
+        let suyos = storage::boletos(&env, &recolector) + boletos;
+        storage::guardar_boletos(&env, &recolector, suyos);
 
         Entregado { recolector, numero, boletos }.publish(&env);
         Ok(())
@@ -171,18 +115,18 @@ impl BoletoLleno {
     /// 3. Cambia por plata todos los boletos de un recolector. Devuelve cuánto cobró.
     ///    No pide firma: la plata solo puede ir al recolector, la pida quien la pida.
     pub fn cobrar(env: Env, recolector: Address) -> Result<i128, Error> {
-        let boletos = Self::boletos(env.clone(), recolector.clone());
+        let boletos = storage::boletos(&env, &recolector);
         if boletos == 0 {
             return Err(Error::NadaParaCobrar);
         }
 
         // primero se borran los boletos y después sale la plata
-        env.storage().persistent().remove(&DataKey::Boletos(recolector.clone()));
-        let mut estado = Self::estado(env.clone());
+        storage::borrar_boletos(&env, &recolector);
+        let mut estado = storage::estado(&env);
         estado.entregados -= boletos;
-        guardar(&env, &estado);
+        storage::guardar_estado(&env, &estado);
 
-        let datos = Self::datos(env.clone());
+        let datos = storage::datos(&env);
         let monto = mover(&env, &datos, &env.current_contract_address(), &recolector, boletos);
         Cobrado { recolector, boletos, monto }.publish(&env);
         Ok(monto)
@@ -190,9 +134,9 @@ impl BoletoLleno {
 
     /// 4. El productor recupera la plata de boletos libres. Los entregados no se tocan.
     pub fn retirar(env: Env, boletos: u32) -> Result<(), Error> {
-        let datos = Self::datos(env.clone());
+        let datos = storage::datos(&env);
         datos.productor.require_auth();
-        let mut estado = Self::estado(env.clone());
+        let mut estado = storage::estado(&env);
         if boletos == 0 {
             return Err(Error::CantidadInvalida);
         }
@@ -201,7 +145,7 @@ impl BoletoLleno {
         }
 
         estado.libres -= boletos;
-        guardar(&env, &estado);
+        storage::guardar_estado(&env, &estado);
         mover(&env, &datos, &env.current_contract_address(), &datos.productor, boletos);
         Retirado { boletos }.publish(&env);
         Ok(())
@@ -209,35 +153,37 @@ impl BoletoLleno {
 
     /// El productor cambia al medidor, por ejemplo si perdió o le robaron la clave.
     /// Los boletos ya entregados no cambian.
-    pub fn cambiar_medidor(env: Env, medidor: Address) {
-        let mut datos = Self::datos(env.clone());
+    pub fn cambiar_medidor(env: Env, medidor: Address) -> Result<(), Error> {
+        let mut datos = storage::datos(&env);
         datos.productor.require_auth();
+        if medidor == env.current_contract_address() {
+            return Err(Error::MedidorInvalido);
+        }
+
+        let anterior = datos.medidor;
         datos.medidor = medidor.clone();
-        let s = env.storage().instance();
-        s.set(&DataKey::Datos, &datos);
-        s.extend_ttl(30 * DIA, 120 * DIA);
-        MedidorCambiado { medidor }.publish(&env);
+        storage::guardar_datos(&env, &datos);
+        MedidorCambiado { anterior, medidor }.publish(&env);
+        Ok(())
     }
 
     // Consultas: solo leen, no piden firma
 
     /// Cuántos boletos sin cobrar tiene un recolector. Todos tienen su plata.
     pub fn boletos(env: Env, recolector: Address) -> u32 {
-        env.storage().persistent().get(&DataKey::Boletos(recolector)).unwrap_or(0)
+        storage::boletos(&env, &recolector)
     }
 
     /// Cuántos boletos hay libres y entregados, y el número de la última entrega.
     pub fn estado(env: Env) -> Estado {
-        env.storage().instance().get(&DataKey::Estado).unwrap()
+        storage::estado(&env)
     }
 
     /// Lo que se fijó al desplegar: quiénes, con qué moneda y cuánto vale un boleto.
     pub fn datos(env: Env) -> Datos {
-        env.storage().instance().get(&DataKey::Datos).unwrap()
+        storage::datos(&env)
     }
 }
-
-// Ayudantes (no son funciones públicas del contrato)
 
 // Mueve la plata de esa cantidad de boletos. Devuelve el monto.
 fn mover(env: &Env, datos: &Datos, de: &Address, para: &Address, boletos: u32) -> i128 {
@@ -245,14 +191,3 @@ fn mover(env: &Env, datos: &Datos, de: &Address, para: &Address, boletos: u32) -
     token::TokenClient::new(env, &datos.moneda).transfer(de, para, &monto);
     monto
 }
-
-// Guarda el estado y renueva la vida (TTL) del contrato: si le quedan menos de
-// 30 días, la estira a unos 120. Si se archiva no se pierde: se restaura al usarlo.
-fn guardar(env: &Env, estado: &Estado) {
-    let s = env.storage().instance();
-    s.set(&DataKey::Estado, estado);
-    s.extend_ttl(30 * DIA, 120 * DIA);
-}
-
-#[cfg(test)]
-mod test;
