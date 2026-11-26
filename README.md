@@ -7,8 +7,8 @@
 
 <p align="center">
   <a href="https://github.com/jfacundoayala/boleto-lleno/actions/workflows/tests.yml"><img src="https://github.com/jfacundoayala/boleto-lleno/actions/workflows/tests.yml/badge.svg" alt="Estado de los tests"></a>
-  <a href="https://stellar.expert/explorer/testnet/contract/CBZ47VWCFR2MP6SOQEJVVP3L2XXDIK3IMST5MEQFMBFZOCD7QVXCEYIQ"><img src="https://img.shields.io/badge/Stellar-Testnet-55795F" alt="Publicado en Stellar Testnet"></a>
-  <img src="https://img.shields.io/badge/Soroban_SDK-28-8A6D55" alt="Soroban SDK 28">
+  <a href="https://stellar.expert/explorer/testnet/contract/CBWS4OR7LPKIK6TTYCTGWP2X2Y24VKSLAC6ALWIAUREGMYPKMKXPLAYC"><img src="https://img.shields.io/badge/Stellar-Testnet-55795F" alt="Publicado en Stellar Testnet"></a>
+  <a href="https://github.com/jfacundoayala/boleto-lleno/releases/latest"><img src="https://img.shields.io/badge/compilado-verificado-8A6D55" alt="Compilado verificado"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/licencia-MIT-B59C86" alt="Licencia MIT"></a>
 </p>
 
@@ -18,6 +18,7 @@
   <a href="#la-solución">Solución</a> ·
   <a href="#cómo-funciona">Cómo funciona</a> ·
   <a href="#probado-en-testnet">Testnet</a> ·
+  <a href="#qué-se-puede-verificar">Verificar</a> ·
   <a href="#tests">Tests</a> ·
   <a href="#cómo-correrlo">Cómo correrlo</a>
 </p>
@@ -58,10 +59,10 @@ café. No es para todo el sector cafetalero.
 
 | Hoy | Qué falta |
 | :-- | :-- |
-| Efectivo al medir | Se cobra en el momento, pero hay que llevar la plata al cafetal |
+| Efectivo al medir | Hay que llevar la plata al cafetal |
 | Boleto o ficha | Se puede entregar sin plata detrás y se puede perder |
-| Cuaderno | Lo tiene el productor y tampoco muestra si la plata está |
-| Transferencia | Se hace por día o por semana y antes no se ve si la plata está |
+| Cuaderno | Lo lleva el productor y nadie más lo ve |
+| Transferencia | Llega días después |
 
 ## La solución
 
@@ -72,7 +73,7 @@ la de los otros 2.
 ### Por qué lo elegí
 
 El boleto de café es una promesa de pago y un contrato puede cambiar esa promesa por plata
-que ya está apartada. Además es un problema pequeño y se entiende con cuatro acciones.
+que ya está apartada. Además es un problema pequeño y se entiende con pocas acciones.
 
 No hablé con recolectores ni con productores. Falta preguntarles si usarían una billetera
 y cómo pasarían la plata a colones.
@@ -85,6 +86,7 @@ flowchart LR
     M([Medidor]) -- "2 entregar" --> C
     C -- "3 cobrar" --> R([Recolector])
     C -. "4 retirar lo no entregado" .-> P
+    P -. "5 cambiar medidor" .-> M
 
     classDef persona fill:#F4E9DA,stroke:#B59C86,color:#3E2A20
     classDef contrato fill:#55795F,stroke:#3F5F49,color:#FFFFFF
@@ -103,7 +105,7 @@ flowchart LR
 También se puede mirar sin firmar con `boletos`, `estado` y `datos`.
 
 La idea entera está en tres líneas de `entregar`
-([src/contract.rs](src/contract.rs#L91-L93)):
+([src/contract.rs](https://github.com/jfacundoayala/boleto-lleno/blob/v3.0.0/src/contract.rs#L95-L97)):
 
 ```rust
 if boletos > estado.libres {
@@ -112,8 +114,7 @@ if boletos > estado.libres {
 ```
 
 > [!IMPORTANT]
-> Con XLM, la plata del contrato siempre alcanza para todos los boletos, los libres y los
-> entregados.
+> La plata del contrato siempre alcanza para todos los boletos, los libres y los entregados.
 
 <details>
 <summary><b>Errores del contrato</b></summary>
@@ -132,10 +133,8 @@ if boletos > estado.libres {
 
 ### Decisiones
 
-- **Por qué no pagar directo.** Es más simple. Elegí el boleto porque respeta la costumbre,
-  junta varias entregas en un solo pago y la plata queda apartada desde antes.
-- **Por qué un contrato.** Un cuaderno compartido dice que la plata está y el contrato la
-  tiene.
+- **Por qué no pagar directo.** Sería más simple, pero el boleto respeta la costumbre, junta
+  varias entregas en un solo pago y la plata queda apartada desde antes.
 - **Por qué cualquiera puede pedir el cobro.** La plata solo puede ir al recolector. Así
   otra persona puede pedirlo y pagar la comisión de la red.
 - **Por qué cada entrega lleva un número.** Si el medidor la manda dos veces por error, la
@@ -144,20 +143,19 @@ if boletos > estado.libres {
   tuvo una
   ([CAP-73](https://github.com/stellar/stellar-protocol/blob/master/core/cap-0073.md)).
   Ese XLM queda de reserva. Los ejemplos usan boletos de 2 XLM solo para probar.
-- **Por qué solo XLM.** La moneda no se elige al publicar: el contrato usa siempre XLM. Así
-  nadie puede armar uno con una moneda falsa.
+- **Por qué solo XLM.** Nadie elige la moneda, así nadie puede armar uno con una moneda falsa.
 
 ### Qué no hace
 
 - No mide el café. Si el medidor anota de menos, el contrato no lo sabe.
 - No frena a un medidor cómplice. El daño no pasa de lo que el productor cargó.
 - No le da plata a quien no la tiene. Sirve para quien puede apartarla antes.
-- No obliga a cargar. El productor puede retirar lo que todavía no se entregó.
-- No anula un boleto mal entregado. Si el medidor pierde la clave, el productor pone otro;
-  si la pierde el productor, no hay arreglo.
+- No anula un boleto mal entregado ni revisa que la cuenta del recolector esté bien escrita.
+- Si el productor pierde su clave, no hay arreglo.
 - No paga en colones y el XLM cambia de precio. No alcanza para cumplir la ley por sí solo.
-- No revisa que la cuenta del recolector esté bien escrita. Eso lo tiene que cuidar quien entrega.
 - No devuelve la plata que alguien mande por fuera de `cargar`.
+- Si pasan 120 días sin movimientos, la red archiva los boletos y el contrato. La plata no
+  se pierde, pero hay que restaurarlos antes de seguir.
 
 > [!NOTE]
 > Es una práctica en Testnet y no tiene auditoría profesional.
@@ -165,26 +163,34 @@ if boletos > estado.libres {
 ## Probado en Testnet
 
 El contrato está publicado en
-[`CBZ47V…XCEYIQ`](https://stellar.expert/explorer/testnet/contract/CBZ47VWCFR2MP6SOQEJVVP3L2XXDIK3IMST5MEQFMBFZOCD7QVXCEYIQ)
+[`CBWS4O…XPLAYC`](https://stellar.expert/explorer/testnet/contract/CBWS4OR7LPKIK6TTYCTGWP2X2Y24VKSLAC6ALWIAUREGMYPKMKXPLAYC)
 con boletos de 2 XLM.
 
 | Paso | Libres | De Rosa | Resultado |
 | :-- | :-: | :-: | :-- |
-| Se publica con boletos de 2 XLM | 0 | 0 | [Contrato creado](https://stellar.expert/explorer/testnet/tx/4c466384a0dbdedf81d9f037c811469d2b81d34e6be48f26927b0c76290f45e5) |
-| El productor carga 5 | 5 | 0 | [Entran 10 XLM](https://stellar.expert/explorer/testnet/tx/1d978b375879b36f4e279845ab6106a9d10674d6388e995d308d84615c7cffc8) |
-| El medidor le entrega 3 a Rosa | 2 | 3 | [Rosa tiene 3 boletos](https://stellar.expert/explorer/testnet/tx/e48b88a1826960a749cc311d05943a4476c08fc6650155220940a1013a2fc706) |
+| Se publica con boletos de 2 XLM | 0 | 0 | [Contrato creado](https://stellar.expert/explorer/testnet/tx/b44c1ecac254f33af95610ae634969bd40c2eab50340c89978f27db18c6e4f91) |
+| El productor carga 5 | 5 | 0 | [Entran 10 XLM](https://stellar.expert/explorer/testnet/tx/02980e603ba46c6e3e43fe398bbffe16912f88ae928be15689c40c72e7585d1c) |
+| El medidor le entrega 3 a Rosa | 2 | 3 | [Rosa tiene 3 boletos](https://stellar.expert/explorer/testnet/tx/5fc949b94da576506f2360c06742398bbc3b83f7e35b44c069a99c6e4afd9f30) |
 | El productor quiere retirar 3 | 2 | 3 | Rechazado, error 3 |
-| El productor retira 2 | 0 | 3 | [Vuelven 4 XLM](https://stellar.expert/explorer/testnet/tx/2ad4a62a3b96a681126bcdf33fa45601f1a90c5e449f75e0388f92f8596b435e) |
+| El productor retira 2 | 0 | 3 | [Vuelven 4 XLM](https://stellar.expert/explorer/testnet/tx/f0b96ea8c1cd39b9ac4b92c6e4fd85b91f0ff5e739a1074879c888ecca61ef87) |
 | El medidor quiere entregar 1 más | 0 | 3 | Rechazado, error 3 |
-| Otra cuenta pide el cobro para Rosa | 0 | 0 | [Le llegan 6 XLM](https://stellar.expert/explorer/testnet/tx/988b0ea246d4e5d559d50fdd231cb734461b94afcb2b2eb1f474dab207ba7286) |
+| Otra cuenta pide el cobro para Rosa | 0 | 0 | [Le llegan 6 XLM](https://stellar.expert/explorer/testnet/tx/afe4666a075b7ea546c2c29ebfddec07dd982e95d28be865f4a10591f388edf3) |
 | Se pide el cobro otra vez | 0 | 0 | Rechazado, error 6 |
 
-Después probé con Tito, que no tenía cuenta en la red y no firmó nada. El productor
-[cargó 1 boleto](https://stellar.expert/explorer/testnet/tx/b0880f54e887cf8bdee5accbb36cc0dc6f5aba11793edc08ccd3e830657d75b3),
-el medidor [se lo dio](https://stellar.expert/explorer/testnet/tx/9d7cf40acd6e12fff60a3110f8b0011a286755bcd0f6bed896ac773a1e9b7b3e)
-y el [cobro](https://stellar.expert/explorer/testnet/tx/da8d3747ad68d354c031bf95afef9aa08505a4abe0fa079b0d2d8d1421430d08)
-[creó su cuenta](https://stellar.expert/explorer/testnet/account/GBRQ7OD5AKQIEUIUNNFISMN62R43PYYR47MKJ7BZXVN5ZJJNPKBQ6EUY)
-con 2 XLM. Los rechazos no tienen link porque la red los frena antes de mandarlos.
+**Ana no tenía cuenta en la red y no firmó nada.** El productor
+[cargó 1 boleto](https://stellar.expert/explorer/testnet/tx/b474625641e8791549d4bee98c9dcf20caa2d6a464d462847e09dcd00af07836),
+el medidor [se lo dio](https://stellar.expert/explorer/testnet/tx/5b355aa194896b4b9a2f7a014921ec1e84c98a170076edc83ebc229a7446be08)
+y el [cobro](https://stellar.expert/explorer/testnet/tx/8ac2a38f233e633afbe88babea625b697b99fae560024ad6e92be66a51b25047)
+[creó su cuenta](https://stellar.expert/explorer/testnet/account/GBSOVBN5TFUASEK6TLDTKPME7O5OSITLUD47RG4UBR7W74WGOEGTVHYO)
+con 2 XLM.
+
+Al final el productor [cargó 4 más](https://stellar.expert/explorer/testnet/tx/8e3213482d86276f38cb976e6e76584e04256811f7e4cd20b618599756b6f599)
+y [cambió el medidor](https://stellar.expert/explorer/testnet/tx/e1f54140bf09746b3d8b0e9272a307f4f94252cc5945d132e9363a943ccbe4d4).
+El medidor anterior ya no pudo entregar y el nuevo
+[le dio 2 a Rosa](https://stellar.expert/explorer/testnet/tx/e5ada3e125e7bc361c937d1483064c2a8b1ada7ed714721ff23fce3a884a3b45).
+Quedaron 2 boletos libres y 2 de Rosa sin cobrar, para que se vean en la web.
+
+Los rechazos no tienen link porque la red los frena antes de mandarlos.
 
 En la [web del proyecto](https://jfacundoayala.github.io/boleto-lleno/) se ve cómo está el
 contrato ahora, leído en vivo de Testnet.
@@ -195,39 +201,40 @@ contrato ahora, leído en vivo de Testnet.
 ```bash
 stellar keys generate jurado --network testnet --fund
 stellar contract invoke --network testnet --source jurado \
-  --id CBZ47VWCFR2MP6SOQEJVVP3L2XXDIK3IMST5MEQFMBFZOCD7QVXCEYIQ -- estado
+  --id CBWS4OR7LPKIK6TTYCTGWP2X2Y24VKSLAC6ALWIAUREGMYPKMKXPLAYC -- estado
 ```
 
 </details>
 
 ## Qué se puede verificar
 
-- **El código publicado es este.** GitHub compila el contrato al crear la versión
-  [v2.0.0](https://github.com/jfacundoayala/boleto-lleno/releases/tag/v2.0.0_boleto-lleno_cli28.1.0)
-  y firma de dónde salió. stellar.expert compara el resultado con lo que está en la red y
-  muestra el contrato como verificado.
-- **El hash del contrato** es
-  `5e9ba9598aaed08c461400587a06f032c239a61850a2bcd24628fdc6cac5a8a7`.
+GitHub compila el contrato al crear la versión
+[v3.0.0](https://github.com/jfacundoayala/boleto-lleno/releases/tag/v3.0.0_boleto-lleno_cli28.1.0)
+y firma de dónde salió. stellar.expert compara el resultado con lo que está en la red y
+muestra el contrato como verificado, desde el commit
+[`0541a0b`](https://github.com/jfacundoayala/boleto-lleno/tree/v3.0.0).
 
 ```bash
-gh release download v2.0.0_boleto-lleno_cli28.1.0 -R jfacundoayala/boleto-lleno
-sha256sum boleto-lleno_v2.0.0.wasm
-gh attestation verify boleto-lleno_v2.0.0.wasm -R jfacundoayala/boleto-lleno   --signer-repo stellar-expert/soroban-build-workflow
+gh release download v3.0.0_boleto-lleno_cli28.1.0 -R jfacundoayala/boleto-lleno
+sha256sum boleto-lleno_v3.0.0.wasm
+# da3d6878439ac63733016239a410f75fa4d9ab77d8df4282dd975cd2f6e8fc98
+gh attestation verify boleto-lleno_v3.0.0.wasm -R jfacundoayala/boleto-lleno \
+  --signer-repo stellar-expert/soroban-build-workflow
 ```
 
-La primera versión ([`CCKXXT…BSXIHOI`](https://stellar.expert/explorer/testnet/contract/CCKXXTVEZXKXANOEJBYKLSBWOLR5CZ72I4KBJY27QIN3DKAK6BSXIHOI))
-dejaba elegir la moneda y no tenía forma de cambiar el medidor. Quedó reemplazada por esta.
+Las versiones anteriores siguen en Testnet pero ya no se usan. La primera dejaba elegir la
+moneda y la segunda no tenía la release atada a su código.
 
 ## Tests
 
-Son 30 y están en [`src/test.rs`](src/test.rs).
+Están en [`src/test.rs`](src/test.rs).
 
 | Qué prueban | Para qué |
 | :-- | :-- |
 | El camino completo | Cargar, entregar, cobrar y retirar |
 | No hay boleto vacío | Sin plata no se entrega y lo entregado no se retira |
-| El cobro | No se cobra dos veces y la plata le llega al recolector |
-| Las firmas | Cada uno firma lo suyo, también si productor y medidor son la misma cuenta |
+| El cobro | No se cobra dos veces, la plata le llega al recolector y le crea la cuenta |
+| Las firmas | Cada uno firma lo suyo y el medidor anterior deja de poder entregar |
 | Lo que queda a la vista | Errores, eventos y tiempo de vida de los datos |
 | Al azar | 25 recorridos de 80 pasos donde la plata del contrato siempre coincide con los boletos |
 
@@ -239,7 +246,6 @@ Hace falta Rust (rustup baja solo la versión del proyecto) y la
 ```bash
 git clone https://github.com/jfacundoayala/boleto-lleno
 cd boleto-lleno
-rustup target add wasm32v1-none
 cargo test
 stellar contract build
 ```

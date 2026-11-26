@@ -360,6 +360,14 @@ fn el_productor_no_puede_entregar() {
 }
 
 #[test]
+fn el_medidor_no_puede_cargar() {
+    let p = preparar();
+    p.solo_firma(&p.medidor, "cargar", (5u32,).into_val(&p.env));
+    assert!(p.contrato.try_cargar(&5).is_err());
+    assert_eq!(p.contrato.estado().libres, 0);
+}
+
+#[test]
 fn el_medidor_no_puede_retirar() {
     let p = preparar();
     p.contrato.cargar(&5);
