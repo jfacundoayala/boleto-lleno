@@ -163,6 +163,26 @@
   .pasos code { font: 500 13px "JetBrains Mono", monospace; color: var(--ink); }
   .pasos p { margin: 2px 0 0; color: var(--ink-2); font-size: 14px; }
 
+  /* cómo funciona */
+  .como h2 { margin-bottom: 4px; }
+  .camino { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+  .camino li { padding: 18px; border-radius: 16px; background: var(--card); border: 1px solid var(--line); display: flex; flex-direction: column; }
+  .camino .n { width: 30px; height: 30px; border-radius: 50%; background: var(--green-soft); color: var(--green); display: grid; place-items: center; font: 600 14px Fraunces, Georgia, serif; }
+  .camino h3 { font: 600 16px/1.3 Inter, sans-serif; margin: 12px 0 6px; }
+  .camino p { margin: 0 0 12px; color: var(--ink-2); font-size: 14px; line-height: 1.5; flex: 1; }
+  .camino code, .como .chico code { font: 500 12px "JetBrains Mono", monospace; color: var(--ink-3); }
+
+  /* cómo comprobarlo */
+  .pruebas { list-style: none; margin: 0; padding: 0; display: grid; gap: 16px; }
+  .pruebas li { display: grid; grid-template-columns: 22px 1fr; gap: 12px; align-items: start; }
+  .pruebas .punto { width: 22px; height: 22px; margin-top: 1px; border-radius: 50%; background: var(--bg-2); border: 1px solid var(--line); position: relative; }
+  .pruebas .ok .punto { background: var(--green-soft); border-color: transparent; }
+  .pruebas .ok .punto::after { content: ""; position: absolute; left: 7px; top: 4px; width: 5px; height: 9px; border: solid var(--green); border-width: 0 2px 2px 0; transform: rotate(45deg); }
+  .pruebas .mal .punto { background: var(--coffee-soft); border-color: var(--red); }
+  .pruebas b { font-weight: 600; font-size: 15px; }
+  .pruebas p { margin: 2px 0 0; color: var(--ink-2); font-size: 14px; overflow-wrap: anywhere; }
+  .pruebas .enlaces { font-size: 13px; color: var(--ink-3); margin-top: 4px; }
+
   /* historia */
   .historia { padding: 24px; }
   .linea { list-style: none; margin: 0; padding: 0; position: relative; }
@@ -190,6 +210,7 @@
 
   @media (max-width: 760px) {
     .numeros { grid-template-columns: repeat(2, 1fr); }
+    .camino { grid-template-columns: repeat(2, 1fr); }
     .doble { grid-template-columns: 1fr; }
     .estado, .bloque, .historia { padding: 20px; }
     .linea li { grid-template-columns: 36px 1fr; }
@@ -199,6 +220,7 @@
   @media (max-width: 420px) {
     .wrap { padding: 0 16px; }
     form { flex-direction: column; }
+    .camino { grid-template-columns: 1fr; }
     .live .texto-largo { display: none; }
   }
   @media (prefers-reduced-motion: reduce) {
@@ -230,6 +252,18 @@
       <a class="boton" id="link-contrato" href="https://stellar.expert/explorer/testnet/contract/CBWS4OR7LPKIK6TTYCTGWP2X2Y24VKSLAC6ALWIAUREGMYPKMKXPLAYC">Ver el contrato en la red ↗</a>
     </div>
   </div>
+
+  <section class="como">
+    <h2>Cómo funciona</h2>
+    <p class="sub">Son cuatro pasos y cada uno lo firma la persona que corresponde.</p>
+    <ol class="camino">
+      <li><span class="n">1</span><h3>El productor guarda la plata</h3><p>Antes de la cogida, deja en el contrato la plata de los boletos.</p><code>cargar</code></li>
+      <li><span class="n">2</span><h3>El medidor entrega boletos</h3><p>Le da un boleto por cajuela a quien coge café. Solo puede dar boletos que ya tienen plata.</p><code>entregar</code></li>
+      <li><span class="n">3</span><h3>El recolector cobra</h3><p>Cambia sus boletos por plata. Cualquiera puede pedir el cobro, pero la plata solo le llega a él.</p><code>cobrar</code></li>
+      <li><span class="n">4</span><h3>Lo que sobra vuelve</h3><p>El productor recupera la plata de los boletos que no entregó. La de los entregados no la puede tocar.</p><code>retirar</code></li>
+    </ol>
+    <p class="chico">Si al medidor se le pierde la clave, el productor pone otro con <code>cambiar_medidor</code>.</p>
+  </section>
 
   <section class="tarjeta estado">
     <div class="estado-cabeza">
@@ -276,15 +310,39 @@
     </section>
 
     <section class="tarjeta bloque">
-      <h2>Qué se puede hacer</h2>
-      <p class="sub">Cada paso lo firma la persona que corresponde.</p>
-      <ol class="pasos">
-        <li><span class="n">1</span><div><code>cargar</code><p>El productor guarda la plata de los boletos.</p></div></li>
-        <li><span class="n">2</span><div><code>entregar</code><p>El medidor, que mide el café, le da boletos a quien lo coge, solo si tienen plata.</p></div></li>
-        <li><span class="n">3</span><div><code>cobrar</code><p>Cualquiera lo puede pedir, pero la plata solo le llega al recolector.</p></div></li>
-        <li><span class="n">4</span><div><code>retirar</code><p>El productor saca la plata de los boletos que nadie tiene.</p></div></li>
-        <li><span class="n">5</span><div><code>cambiar_medidor</code><p>El productor pone otro medidor, por ejemplo si se le perdió la clave.</p></div></li>
-      </ol>
+      <h2>Cómo comprobarlo</h2>
+      <p class="sub">No hace falta creerle a nadie: todo se puede revisar.</p>
+      <ul class="pruebas">
+        <li id="p-codigo">
+          <span class="punto"></span>
+          <div>
+            <b>El contrato publicado sale de este código</b>
+            <p id="p-codigo-texto" aria-live="polite">Comparando con la red…</p>
+            <p class="enlaces"><a href="https://github.com/jfacundoayala/boleto-lleno/releases/tag/v3.0.0_boleto-lleno_cli28.1.0">Ver la versión 3.0.0</a> · <a href="https://stellar.expert/explorer/testnet/contract/CBWS4OR7LPKIK6TTYCTGWP2X2Y24VKSLAC6ALWIAUREGMYPKMKXPLAYC">Ver en stellar.expert</a></p>
+          </div>
+        </li>
+        <li id="p-plata">
+          <span class="punto"></span>
+          <div>
+            <b>La plata está guardada</b>
+            <p id="p-plata-texto" aria-live="polite">Leyendo el saldo…</p>
+          </div>
+        </li>
+        <li class="ok">
+          <span class="punto"></span>
+          <div>
+            <b>Cada movimiento tiene su transacción</b>
+            <p>En la lista de abajo, toque el código de cualquier movimiento para verlo en la red.</p>
+          </div>
+        </li>
+        <li class="ok">
+          <span class="punto"></span>
+          <div>
+            <b>El contrato tiene pruebas</b>
+            <p>GitHub las corre en cada cambio. <a href="https://github.com/jfacundoayala/boleto-lleno/actions/workflows/tests.yml">Ver las pruebas</a></p>
+          </div>
+        </li>
+      </ul>
     </section>
   </div>
 
@@ -335,6 +393,8 @@
   ];
   const EXPERT = "https://stellar.expert/explorer/testnet";
   const STROOPS = 10_000_000n;
+  // sha256 del wasm de la versión 3.0.0, el que compiló y firmó GitHub
+  const WASM = "da3d6878439ac63733016239a410f75fa4d9ab77d8df4282dd975cd2f6e8fc98";
 
   // La prueba del README. La red guarda los eventos solo unos 7 días,
   // así que estos quedan siempre a la vista. Los nuevos se leen en vivo.
@@ -422,6 +482,7 @@
     $("regla-texto").textContent = ok
       ? "Todos los boletos tienen su plata guardada."
       : "La plata del contrato no alcanza para todos los boletos.";
+    marcar("p-plata", ok, `El contrato tiene ${xlm(saldo)} XLM y los boletos necesitan ${xlm(necesita)} XLM.`);
     $("regla-cuenta").textContent = `Hay ${xlm(saldo)} XLM y hacen falta ${xlm(necesita)} XLM (${total} boleto${total === 1 ? "" : "s"} × ${xlm(valor)} XLM).`;
 
     $("d-productor").innerHTML = `<a href="${EXPERT}/account/${datos.productor}">${corto(datos.productor)}</a>`;
@@ -495,6 +556,30 @@
       </li>`).join("");
   }
 
+  function marcar(id, ok, texto) {
+    $(id).classList.toggle("ok", ok === true);
+    $(id).classList.toggle("mal", ok === false);
+    $(id + "-texto").textContent = texto;
+  }
+
+  // Lee qué código tiene el contrato en la red y lo compara con el de la versión.
+  let codigoListo = false;
+  async function comprobarCodigo() {
+    if (codigoListo) return;
+    try {
+      const clave = new S.Contract(CONTRATO).getFootprint();
+      const r = await servidor.getLedgerEntries(clave);
+      const hash = String(r.entries[0].val.contractData.val.instance.executable.wasmHash);
+      codigoListo = true;
+      marcar("p-codigo", hash === WASM, hash === WASM
+        ? `El código en la red es el mismo que compiló GitHub (${hash.slice(0, 8)}…${hash.slice(-4)}).`
+        : `No coincide: en la red hay ${hash.slice(0, 8)}… y la versión es ${WASM.slice(0, 8)}…`);
+    } catch (err) {
+      console.error(err);
+      marcar("p-codigo", null, "No se pudo comparar ahorita. Se puede revisar en los enlaces.");
+    }
+  }
+
   async function pintarConocidos() {
     const filas = await Promise.all(RECOLECTORES.map(async (r) => {
       const n = (await cliente.boletos({ recolector: r.cuenta })).result;
@@ -516,12 +601,16 @@
       valorBoleto = BigInt(lectura.datos.valor);
       pintarEstado(lectura);
       await pintarConocidos();
+      comprobarCodigo();
       vivo(true, 'En vivo<span class="texto-largo"> · Testnet</span>');
     } catch (err) {
       console.error(err);
       vivo(false, "Sin conexión");
       $("actualizado").textContent = "No se pudo leer la red. Intente de nuevo en un ratito.";
-      if (!valorBoleto) $("regla-texto").textContent = "Todavía no se pudo leer el contrato.";
+      if (!valorBoleto) {
+        $("regla-texto").textContent = "Todavía no se pudo leer el contrato.";
+        marcar("p-plata", null, "Todavía no se pudo leer el saldo.");
+      }
     }
     try {
       pintarHistoria(servidor ? await leerEventos() : undefined);
