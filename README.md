@@ -43,7 +43,7 @@ recibe no puede ver si la plata está.**
 - **La plata podía llegar después.** Antes, muchos productores pequeños daban boletos
   porque todavía no tenían el efectivo. Lo conseguían cuando les pagaba el beneficiador,
   por lo general al final de la semana
-  ([Revista Herencia, UCR, 2020](https://archivo.revistas.ucr.ac.cr//index.php/herencia/article/download/43300/43537/)).
+  ([Revista Herencia, UCR, 2020](https://archivo.revistas.ucr.ac.cr/index.php/herencia/article/download/43300/43537/)).
 
 La ley pone un plazo, pero el boleto no muestra si se va a cumplir. No encontré un caso
 probado de boletos sin pagar y no digo que sea lo común. Lo que busco es que el recolector

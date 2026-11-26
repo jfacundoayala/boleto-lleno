@@ -5,6 +5,18 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Boleto Lleno</title>
 <meta name="description" content="Un boleto de café que solo se entrega si su plata ya está apartada. El contrato en Stellar Testnet, en vivo.">
+<meta name="theme-color" content="#FBF6EE" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1D1714" media="(prefers-color-scheme: dark)">
+<meta property="og:type" content="website">
+<meta property="og:locale" content="es_CR">
+<meta property="og:title" content="Boleto Lleno">
+<meta property="og:description" content="Un boleto de café que solo se entrega si su plata ya está apartada. El contrato en Stellar Testnet, en vivo.">
+<meta property="og:url" content="https://jfacundoayala.github.io/boleto-lleno/">
+<meta property="og:image" content="https://jfacundoayala.github.io/boleto-lleno/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Boleto Lleno. Ningún boleto de café sin su plata apartada">
+<meta name="twitter:card" content="summary_large_image">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cpath d='M6 10h52a4 4 0 0 1 4 4v10a8 8 0 0 0 0 16v10a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V40a8 8 0 0 0 0-16V14a4 4 0 0 1 4-4Z' fill='%2355795F'/%3E%3Cpath d='M22 33l7 7 14-15' fill='none' stroke='%23F4E9DA' stroke-width='5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -16,7 +28,9 @@
     --card: #FFFDF9;
     --ink: #3E2A20;
     --ink-2: #6E5647;
-    --ink-3: #9A8473;
+    --ink-3: #725E4F;
+    --boton: #3F5F49;
+    --boton-hover: #4F7458;
     --line: #E7DACA;
     --green: #4F7458;
     --green-2: #3F5F49;
@@ -27,18 +41,13 @@
     --shadow: 0 1px 2px rgba(62,42,32,.05), 0 8px 24px rgba(62,42,32,.06);
   }
   @media (prefers-color-scheme: dark) {
-    :root:not([data-theme="light"]) {
+    :root {
       --bg: #1D1714; --bg-2: #241D19; --card: #2A221D; --ink: #F4E9DA; --ink-2: #D3C1AE;
       --ink-3: #A8947F; --line: #3D322B; --green: #7EA385; --green-2: #6A9172;
       --green-soft: #2C3A2F; --coffee: #C8A98C; --coffee-soft: #3A2E26; --red: #E08B76;
+      --boton: #46664E; --boton-hover: #507358;
       --shadow: 0 1px 2px rgba(0,0,0,.3), 0 8px 24px rgba(0,0,0,.25);
     }
-  }
-  :root[data-theme="dark"] {
-    --bg: #1D1714; --bg-2: #241D19; --card: #2A221D; --ink: #F4E9DA; --ink-2: #D3C1AE;
-    --ink-3: #A8947F; --line: #3D322B; --green: #7EA385; --green-2: #6A9172;
-    --green-soft: #2C3A2F; --coffee: #C8A98C; --coffee-soft: #3A2E26; --red: #E08B76;
-    --shadow: 0 1px 2px rgba(0,0,0,.3), 0 8px 24px rgba(0,0,0,.25);
   }
 
   * { box-sizing: border-box; }
@@ -85,8 +94,10 @@
   }
   .boton:hover { border-color: var(--ink-3); }
   .boton:active { transform: scale(.97); }
-  .boton.lleno { background: var(--green-2); border-color: var(--green-2); color: #fff; }
-  .boton.lleno:hover { background: var(--green); border-color: var(--green); }
+  .boton.lleno { background: var(--boton); border-color: var(--boton); color: #fff; }
+  .boton.lleno:hover { background: var(--boton-hover); border-color: var(--boton-hover); }
+  .boton:disabled { opacity: .55; cursor: progress; }
+  .boton:focus-visible, .chico button:focus-visible, a:focus-visible { outline: 2px solid var(--green); outline-offset: 2px; }
   .boton svg { width: 16px; height: 16px; }
 
   section { margin: 0 0 28px; }
@@ -214,11 +225,11 @@
     </div>
   </div>
 
-  <section class="tarjeta estado" aria-live="polite">
+  <section class="tarjeta estado">
     <div class="estado-cabeza">
       <div>
         <h2>Cómo está el contrato ahora</h2>
-        <p class="sub" id="actualizado">Leyendo el contrato…</p>
+        <p class="sub" id="actualizado" aria-live="polite">Leyendo el contrato…</p>
       </div>
       <button class="boton" id="refrescar" type="button">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/></svg>
@@ -240,8 +251,8 @@
     </div>
 
     <div class="regla" id="regla">
-      <div class="icono"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></div>
-      <div><p id="regla-texto">Revisando que la plata alcance…</p><small id="regla-cuenta"></small></div>
+      <div class="icono"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg></div>
+      <div><p id="regla-texto" aria-live="polite">Revisando que la plata alcance…</p><small id="regla-cuenta"></small></div>
     </div>
   </section>
 
@@ -295,10 +306,17 @@
   </div>
 </footer>
 
-<script src="https://cdn.jsdelivr.net/npm/@stellar/stellar-sdk@17.4.0/dist/stellar-sdk.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@stellar/stellar-sdk@17.4.0/dist/stellar-sdk.min.js" integrity="sha384-XFLlFedMV0w1RG+x1e/VrR49BGtuDQzvn5/guUY+sDYOP/+yiKIVgBn8OuTH/eye" crossorigin="anonymous"></script>
 <script>
 (() => {
   const S = window.StellarSdk;
+  if (!S) {
+    document.getElementById("vivo").classList.add("error");
+    document.getElementById("vivo-texto").textContent = "Sin conexión";
+    document.getElementById("actualizado").textContent = "No se pudo cargar la herramienta de Stellar. Recargá la página en un rato.";
+    document.getElementById("historia").innerHTML = '<li class="cargando">No se pudo leer la red.</li>';
+    return;
+  }
   const CONTRATO = "CCKXXTVEZXKXANOEJBYKLSBWOLR5CZ72I4KBJY27QIN3DKAK6BSXIHOI";
   const RPC = "https://soroban-testnet.stellar.org";
   const RED = S.Networks.TESTNET;
@@ -333,7 +351,7 @@
     cobrar: '<path d="M20 6 9 17l-5-5"/>',
     retirar: '<path d="M19 12H5"/><path d="m11 19-7-7 7-7"/>',
   };
-  const icono = (t) => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">${ICONOS[t]}</svg>`;
+  const icono = (t) => `<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">${ICONOS[t]}</svg>`;
   const boleto = (color) => `<svg viewBox="0 0 44 28" aria-hidden="true"><path d="M4 0h36a4 4 0 0 1 4 4v6a4 4 0 0 0 0 8v6a4 4 0 0 1-4 4H4a4 4 0 0 1-4-4v-6a4 4 0 0 0 0-8V4a4 4 0 0 1 4-4Z" fill="${color}"/><path d="M15 14.5l4 4 9-9" fill="none" stroke="#F4E9DA" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
 
   let cliente, monedaCliente, servidor;
@@ -395,67 +413,90 @@
     $("actualizado").textContent = `Leído de la red: ${new Date().toLocaleTimeString("es-CR", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}`;
   }
 
-  // Lee los eventos de los últimos días, de a páginas.
-  async function leerEventos() {
-    const ultimo = (await servidor.getLatestLedger()).sequence;
-    let pedido = { startLedger: Math.max(ultimo - 120_000, 2), filters: [{ type: "contract", contractIds: [CONTRATO] }], limit: 100 };
-    const eventos = [];
-    for (let pagina = 0; pagina < 40; pagina++) {
-      const r = await servidor.getEvents(pedido);
-      eventos.push(...r.events);
-      if (!r.cursor) break;
-      const hasta = Number(BigInt(r.cursor.split("-")[0]) >> 32n);
-      if (hasta >= r.latestLedger - 1 && r.events.length < 100) break;
-      pedido = { cursor: r.cursor, filters: pedido.filters, limit: 100 };
+  // Los eventos se leen de a páginas. La primera vez desde lo más viejo que
+  // guarda la red (unos 7 días). Después solo lo nuevo, desde el último cursor.
+  const FILTRO = [{ type: "contract", contractIds: [CONTRATO] }];
+  const vistos = new Map(PRUEBA.map((p) => [p.hash, p]));
+  let cursor = null;
+  let valorBoleto = null;
+
+  function traducir(ev) {
+    const tema = ev.topic.map((t) => S.scValToNative(t));
+    const v = S.scValToNative(ev.value);
+    const quien = tema[1] ? corto(tema[1]) : "";
+    const n = v.boletos;
+    const s = n === 1 ? "" : "s";
+    const plata = valorBoleto ? xlm(valorBoleto * BigInt(n)) + " XLM" : "";
+    const base = { hash: ev.txHash, fecha: ev.ledgerClosedAt };
+    switch (tema[0]) {
+      case "cargado": return { ...base, tipo: "cargar", texto: `El productor carga ${n} boleto${s}`, detalle: plata && `Entran ${plata}` };
+      case "entregado": return { ...base, tipo: "entregar", texto: `El medidor entrega ${n} boleto${s} a ${quien}`, detalle: `Entrega número ${v.numero}` };
+      case "cobrado": return { ...base, tipo: "cobrar", texto: `Se cobran ${n} boleto${s} para ${quien}`, detalle: `Le llegan ${xlm(v.monto)} XLM` };
+      case "retirado": return { ...base, tipo: "retirar", texto: `El productor retira ${n} boleto${s}`, detalle: plata && `Vuelven ${plata}` };
+      default: return null;
     }
-    return eventos.map((ev) => {
-      const tema = ev.topic.map((t) => S.scValToNative(t));
-      const v = S.scValToNative(ev.value);
-      const quien = tema[1] ? corto(tema[1]) : "";
-      const n = v.boletos;
-      const s = n === 1 ? "" : "s";
-      const base = { hash: ev.txHash, fecha: ev.ledgerClosedAt };
-      switch (tema[0]) {
-        case "cargado": return { ...base, tipo: "cargar", texto: `El productor carga ${n} boleto${s}`, detalle: "" };
-        case "entregado": return { ...base, tipo: "entregar", texto: `El medidor entrega ${n} boleto${s} a ${quien}`, detalle: `Entrega número ${v.numero}` };
-        case "cobrado": return { ...base, tipo: "cobrar", texto: `Se cobran ${n} boleto${s} para ${quien}`, detalle: `Le llegan ${xlm(v.monto)} XLM` };
-        case "retirado": return { ...base, tipo: "retirar", texto: `El productor retira ${n} boleto${s}`, detalle: "" };
-        default: return null;
-      }
-    }).filter(Boolean);
   }
 
-  function pintarHistoria(vivos) {
-    const porHash = new Map(PRUEBA.map((p) => [p.hash, p]));
-    for (const e of vivos) if (!porHash.has(e.hash)) porHash.set(e.hash, e);
-    const lista = [...porHash.values()].sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
+  async function leerEventos() {
+    let pedido;
+    if (cursor) {
+      pedido = { cursor, filters: FILTRO, limit: 100 };
+    } else {
+      const salud = await servidor.getHealth();
+      pedido = { startLedger: salud.oldestLedger + 10, filters: FILTRO, limit: 100 };
+    }
+    const nuevos = [];
+    for (let pagina = 0; pagina < 40; pagina++) {
+      const r = await servidor.getEvents(pedido);
+      for (const ev of r.events) {
+        const e = traducir(ev);
+        if (e && !vistos.has(e.hash)) { vistos.set(e.hash, e); nuevos.push(e.hash); }
+      }
+      if (!r.cursor) break;
+      cursor = r.cursor;
+      const hasta = Number(BigInt(r.cursor.split("-")[0]) >> 32n);
+      if (hasta >= r.latestLedger - 1 && r.events.length < 100) break;
+      pedido = { cursor, filters: FILTRO, limit: 100 };
+    }
+    return new Set(nuevos);
+  }
+
+  // Solo se animan los movimientos nuevos, así la lista no parpadea.
+  function pintarHistoria(nuevos = new Set()) {
+    const lista = [...vistos.values()].sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
     $("historia").innerHTML = lista.map((e) => `
-      <li class="aparece">
+      <li${nuevos.has(e.hash) ? ' class="aparece"' : ""}>
         <span class="marca m-${e.tipo}">${icono(e.tipo)}</span>
         <div><div class="t">${e.texto}</div><div class="q">${fecha(e.fecha)}${e.detalle ? " · " + e.detalle : ""}</div></div>
-        <a class="tx" href="${EXPERT}/tx/${e.hash}">${e.hash.slice(0, 8)} ↗</a>
+        <a class="tx" href="${EXPERT}/tx/${e.hash}" aria-label="Ver la transacción ${e.hash.slice(0, 8)}">${e.hash.slice(0, 8)} ↗</a>
       </li>`).join("");
   }
 
+  let enCurso = false;
   async function actualizar() {
+    if (enCurso) return;
+    enCurso = true;
     const boton = $("refrescar");
     boton.disabled = true;
     try {
       if (!cliente) await conectar();
-      pintarEstado(await leerEstado());
+      const lectura = await leerEstado();
+      valorBoleto = BigInt(lectura.datos.valor);
+      pintarEstado(lectura);
       vivo(true, 'En vivo<span class="texto-largo"> · Testnet</span>');
     } catch (err) {
       console.error(err);
       vivo(false, "Sin conexión");
       $("actualizado").textContent = "No se pudo leer la red. Probá de nuevo en un rato.";
-    } finally {
-      boton.disabled = false;
     }
     try {
-      pintarHistoria(await leerEventos());
+      pintarHistoria(servidor ? await leerEventos() : undefined);
     } catch (err) {
       console.error(err);
-      pintarHistoria([]);
+      pintarHistoria();
+    } finally {
+      boton.disabled = false;
+      enCurso = false;
     }
   }
 
@@ -464,7 +505,7 @@
     caja.classList.add("ver");
     cuenta = cuenta.trim();
     if (!S.StrKey.isValidEd25519PublicKey(cuenta) && !S.StrKey.isValidContract(cuenta)) {
-      caja.innerHTML = "Esa no parece una cuenta de Stellar. Empieza con G y tiene 56 letras y números.";
+      caja.textContent = "Esa no parece una cuenta de Stellar. Empieza con G (o con C si es un contrato) y tiene 56 letras y números.";
       return;
     }
     caja.innerHTML = '<span class="cargando">Consultando…</span>';
