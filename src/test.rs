@@ -1,7 +1,8 @@
-// cargo test
 extern crate std;
 
 use super::*;
+use crate::constants::{DIA, TTL_ESTIRAR_HASTA, VALOR_MAXIMO, VALOR_MINIMO};
+use crate::storage::DataKey;
 use soroban_sdk::testutils::storage::{Instance as _, Persistent as _};
 use soroban_sdk::testutils::{
     Address as _, AuthorizedFunction, Events as _, Ledger as _, MockAuth, MockAuthInvoke,
@@ -59,7 +60,7 @@ fn cuenta_con_xlm(env: &Env, semilla: u8, stroops: i128) -> Address {
 }
 
 // XLM, el contrato y un productor con plata para 100 boletos
-fn setup() -> Prueba {
+fn preparar() -> Prueba {
     let env = Env::default();
     env.mock_all_auths(); // todos firman
 
@@ -121,7 +122,7 @@ impl Prueba {
 
 #[test]
 fn cargar_entregar_cobrar_y_retirar_lo_que_sobra() {
-    let p = setup();
+    let p = preparar();
     p.contrato.cargar(&5);
     p.contrato.entregar(&1, &p.rosa, &3);
     assert_eq!(p.contrato.boletos(&p.rosa), 3);
@@ -139,7 +140,7 @@ fn cargar_entregar_cobrar_y_retirar_lo_que_sobra() {
 // Varias entregas se juntan y se cobran en una sola transferencia.
 #[test]
 fn las_entregas_se_juntan() {
-    let p = setup();
+    let p = preparar();
     p.contrato.cargar(&10);
     p.contrato.entregar(&1, &p.rosa, &2);
     p.contrato.entregar(&2, &p.luis, &1);
@@ -152,7 +153,7 @@ fn las_entregas_se_juntan() {
 
 #[test]
 fn sin_plata_no_hay_boleto() {
-    let p = setup();
+    let p = preparar();
     let r = p.contrato.try_entregar(&1, &p.rosa, &1);
     assert_eq!(r, Err(Ok(Error::SinLibres)));
     p.contrato.cargar(&2);
@@ -165,7 +166,7 @@ fn sin_plata_no_hay_boleto() {
 
 #[test]
 fn lo_entregado_no_se_puede_retirar() {
-    let p = setup();
+    let p = preparar();
     p.contrato.cargar(&5);
     p.contrato.entregar(&1, &p.rosa, &3);
     assert_eq!(p.contrato.try_retirar(&3), Err(Ok(Error::SinLibres))); // solo hay 2 libres
@@ -177,7 +178,7 @@ fn lo_entregado_no_se_puede_retirar() {
 // Si al productor no le alcanza, no aparece ningún boleto.
 #[test]
 fn si_la_plata_no_alcanza_no_se_carga_nada() {
-    let p = setup();
+    let p = preparar();
     assert!(p.contrato.try_cargar(&101).is_err());
     assert_eq!(p.contrato.estado().libres, 0);
     assert_eq!(p.xlm.balance(&p.contrato.address), 0);
@@ -186,7 +187,7 @@ fn si_la_plata_no_alcanza_no_se_carga_nada() {
 // Plata mandada por fuera no crea boletos: no se entregan sin cargarlos.
 #[test]
 fn la_plata_de_afuera_no_crea_boletos() {
-    let p = setup();
+    let p = preparar();
     p.xlm.transfer(&p.productor, &p.contrato.address, &(5 * VALOR));
     let r = p.contrato.try_entregar(&1, &p.rosa, &1);
     assert_eq!(r, Err(Ok(Error::SinLibres)));
@@ -195,7 +196,7 @@ fn la_plata_de_afuera_no_crea_boletos() {
 // Una secuencia larga, revisando la regla después de cada paso.
 #[test]
 fn siempre_hay_plata_para_todos_los_boletos() {
-    let p = setup();
+    let p = preparar();
     let (mut n, mut total) = (0, 0);
     for vuelta in 1..=5u32 {
         p.contrato.cargar(&(vuelta * 3));
@@ -222,7 +223,7 @@ fn siempre_hay_plata_para_todos_los_boletos() {
 
 #[test]
 fn no_se_cobra_dos_veces() {
-    let p = setup();
+    let p = preparar();
     p.contrato.cargar(&5);
     p.contrato.entregar(&1, &p.rosa, &2);
     p.contrato.cobrar(&p.rosa);
@@ -231,24 +232,27 @@ fn no_se_cobra_dos_veces() {
     assert_eq!(p.xlm.balance(&p.rosa), 2 * VALOR);
 }
 
-// Rosa no tiene cuenta y hay reserva de 0,5 XLM: el cobro se la crea (CAP-73)
+// Rosa no tiene cuenta y la reserva es 0,5 XLM. Un boleto del valor mínimo
+// (1 XLM) alcanza para que el cobro se la cree (CAP-73).
 #[test]
 fn el_cobro_crea_la_cuenta_de_quien_no_tenia() {
-    let p = setup();
+    let p = preparar();
     p.env.ledger().set_base_reserve(5_000_000);
     let id = xdr::AccountId(xdr::PublicKey::PublicKeyTypeEd25519(xdr::Uint256([7; 32])));
     let rosa = Address::try_from_val(&p.env, &xdr::ScAddress::Account(id)).unwrap();
+    let id = p.env.register(BoletoLleno, (&p.productor, &p.medidor, VALOR_MINIMO));
+    let contrato = BoletoLlenoClient::new(&p.env, &id);
 
-    p.contrato.cargar(&5);
-    p.contrato.entregar(&1, &rosa, &3);
-    assert_eq!(p.contrato.cobrar(&rosa), 3 * VALOR);
-    assert_eq!(p.xlm.balance(&rosa), 3 * VALOR);
+    contrato.cargar(&1);
+    contrato.entregar(&1, &rosa, &1);
+    assert_eq!(contrato.cobrar(&rosa), VALOR_MINIMO);
+    assert_eq!(p.xlm.balance(&rosa), VALOR_MINIMO);
 }
 
 // Sin ninguna firma, la plata llega igual a Rosa y a nadie más.
 #[test]
 fn cualquiera_puede_pedir_el_cobro_pero_le_llega_al_recolector() {
-    let p = setup();
+    let p = preparar();
     p.contrato.cargar(&5);
     p.contrato.entregar(&1, &p.rosa, &2);
     p.env.mock_auths(&[]); // desde acá no firma nadie
@@ -262,38 +266,34 @@ fn cualquiera_puede_pedir_el_cobro_pero_le_llega_al_recolector() {
 #[test]
 #[should_panic(expected = "Error(Contract, #1)")]
 fn un_boleto_de_menos_de_1_xlm_falla() {
-    let p = setup();
-    let menos = 9_999_999i128;
-    p.env.register(BoletoLleno, (&p.productor, &p.medidor, menos));
+    let p = preparar();
+    p.env.register(BoletoLleno, (&p.productor, &p.medidor, VALOR_MINIMO - 1));
 }
 
 #[test]
 fn un_boleto_de_1_xlm_justo_sirve() {
-    let p = setup();
-    let justo = 10_000_000i128;
-    let id = p.env.register(BoletoLleno, (&p.productor, &p.medidor, justo));
-    assert_eq!(BoletoLlenoClient::new(&p.env, &id).datos().valor, justo);
+    let p = preparar();
+    let id = p.env.register(BoletoLleno, (&p.productor, &p.medidor, VALOR_MINIMO));
+    assert_eq!(BoletoLlenoClient::new(&p.env, &id).datos().valor, VALOR_MINIMO);
 }
 
 #[test]
 #[should_panic(expected = "Error(Contract, #1)")]
 fn un_boleto_de_mas_de_10_000_xlm_falla() {
-    let p = setup();
-    let mas = 100_000_000_001i128;
-    p.env.register(BoletoLleno, (&p.productor, &p.medidor, mas));
+    let p = preparar();
+    p.env.register(BoletoLleno, (&p.productor, &p.medidor, VALOR_MAXIMO + 1));
 }
 
 #[test]
 fn un_boleto_de_10_000_xlm_justo_sirve() {
-    let p = setup();
-    let justo = 100_000_000_000i128;
-    let id = p.env.register(BoletoLleno, (&p.productor, &p.medidor, justo));
-    assert_eq!(BoletoLlenoClient::new(&p.env, &id).datos().valor, justo);
+    let p = preparar();
+    let id = p.env.register(BoletoLleno, (&p.productor, &p.medidor, VALOR_MAXIMO));
+    assert_eq!(BoletoLlenoClient::new(&p.env, &id).datos().valor, VALOR_MAXIMO);
 }
 
 #[test]
 fn cero_boletos_falla() {
-    let p = setup();
+    let p = preparar();
     p.contrato.cargar(&5);
     assert_eq!(p.contrato.try_cargar(&0), Err(Ok(Error::CantidadInvalida)));
     assert_eq!(p.contrato.try_retirar(&0), Err(Ok(Error::CantidadInvalida)));
@@ -304,7 +304,7 @@ fn cero_boletos_falla() {
 // Se cortó la señal y el medidor mandó dos veces la misma entrega: vale una.
 #[test]
 fn la_misma_entrega_no_cuenta_dos_veces() {
-    let p = setup();
+    let p = preparar();
     p.contrato.cargar(&10);
     p.contrato.entregar(&1, &p.rosa, &3);
     let r = p.contrato.try_entregar(&1, &p.rosa, &3); // repetida
@@ -328,26 +328,17 @@ fn los_errores_tienen_numero_fijo() {
 
 #[test]
 fn el_contrato_no_puede_ser_recolector() {
-    let p = setup();
+    let p = preparar();
     p.contrato.cargar(&5);
     let r = p.contrato.try_entregar(&1, &p.contrato.address, &1);
     assert_eq!(r, Err(Ok(Error::RecolectorInvalido)));
 }
 
-// 5. la moneda
-
-#[test]
-fn la_moneda_siempre_es_xlm() {
-    let p = setup();
-    assert_eq!(p.contrato.datos().moneda, p.xlm.address);
-    assert_eq!(p.xlm.symbol(), soroban_sdk::String::from_str(&p.env, "native"));
-}
-
-// 6. las firmas
+// 5. las firmas
 
 #[test]
 fn cada_uno_firma_lo_suyo() {
-    let p = setup();
+    let p = preparar();
     p.contrato.cargar(&5);
     assert!(p.firmo(&p.productor, "cargar", (5u32,).into_val(&p.env)));
     p.contrato.entregar(&1, &p.rosa, &2);
@@ -361,7 +352,7 @@ fn cada_uno_firma_lo_suyo() {
 
 #[test]
 fn el_productor_no_puede_entregar() {
-    let p = setup();
+    let p = preparar();
     p.contrato.cargar(&5);
     p.solo_firma(&p.productor, "entregar", (1u32, &p.rosa, 2u32).into_val(&p.env));
     assert!(p.contrato.try_entregar(&1, &p.rosa, &2).is_err());
@@ -370,7 +361,7 @@ fn el_productor_no_puede_entregar() {
 
 #[test]
 fn el_medidor_no_puede_retirar() {
-    let p = setup();
+    let p = preparar();
     p.contrato.cargar(&5);
     p.solo_firma(&p.medidor, "retirar", (2u32,).into_val(&p.env));
     assert!(p.contrato.try_retirar(&2).is_err());
@@ -380,7 +371,7 @@ fn el_medidor_no_puede_retirar() {
 // En una finca pequeña el productor y el medidor pueden ser la misma cuenta.
 #[test]
 fn con_una_sola_cuenta_lo_entregado_sigue_protegido() {
-    let p = setup();
+    let p = preparar();
     let id = p.env.register(BoletoLleno, (&p.productor, &p.productor, VALOR));
     let contrato = BoletoLlenoClient::new(&p.env, &id);
     contrato.cargar(&5);
@@ -389,12 +380,12 @@ fn con_una_sola_cuenta_lo_entregado_sigue_protegido() {
     assert_eq!(contrato.cobrar(&p.rosa), 3 * VALOR);
 }
 
-// 7. cambiar al medidor
+// 6. cambiar al medidor
 
 // le roban la clave al medidor: el productor pone otro
 #[test]
 fn el_productor_cambia_al_medidor() {
-    let p = setup();
+    let p = preparar();
     p.contrato.cargar(&5);
     p.contrato.entregar(&1, &p.rosa, &2);
     let nuevo = Address::generate(&p.env);
@@ -412,7 +403,7 @@ fn el_productor_cambia_al_medidor() {
 
 #[test]
 fn el_contrato_no_puede_ser_medidor() {
-    let p = setup();
+    let p = preparar();
     let r = p.contrato.try_cambiar_medidor(&p.contrato.address);
     assert_eq!(r, Err(Ok(Error::MedidorInvalido)));
     assert_eq!(p.contrato.datos().medidor, p.medidor);
@@ -420,18 +411,20 @@ fn el_contrato_no_puede_ser_medidor() {
 
 #[test]
 fn el_medidor_no_se_puede_cambiar_solo() {
-    let p = setup();
+    let p = preparar();
     let otro = Address::generate(&p.env);
     p.solo_firma(&p.medidor, "cambiar_medidor", (&otro,).into_val(&p.env));
     assert!(p.contrato.try_cambiar_medidor(&otro).is_err());
     assert_eq!(p.contrato.datos().medidor, p.medidor);
 }
 
-// 8. lo que queda a la vista
+// 7. lo que queda a la vista
 
+// La moneda es siempre XLM, sin que nadie la elija.
 #[test]
-fn se_ven_los_datos() {
-    let p = setup();
+fn se_ven_los_datos_y_la_moneda_es_xlm() {
+    let p = preparar();
+    assert_eq!(p.xlm.symbol(), soroban_sdk::String::from_str(&p.env, "native"));
     let esperado = Datos {
         productor: p.productor.clone(),
         medidor: p.medidor.clone(),
@@ -443,7 +436,7 @@ fn se_ven_los_datos() {
 
 #[test]
 fn cada_paso_avisa_con_un_evento() {
-    let p = setup();
+    let p = preparar();
     let id = &p.contrato.address;
     let avisos = || p.env.events().all().filter_by_contract(id);
 
@@ -469,11 +462,11 @@ fn cada_paso_avisa_con_un_evento() {
     assert_eq!(avisos(), std::vec![m.to_xdr(&p.env, id)]);
 }
 
-// La primera entrega deja 2 073 600 ledgers de vida (120 días). Cuando quedan menos
-// de 30, otra entrega la vuelve a estirar.
+// La primera entrega deja 120 días de vida. Cuando quedan menos de 30, otra entrega
+// la vuelve a estirar.
 #[test]
 fn renueva_el_ttl() {
-    let p = setup();
+    let p = preparar();
     p.contrato.cargar(&5);
     let vida = || {
         p.env.as_contract(&p.contrato.address, || {
@@ -483,14 +476,14 @@ fn renueva_el_ttl() {
         })
     };
     p.contrato.entregar(&1, &p.rosa, &2);
-    assert_eq!(vida(), (2_073_600, 2_073_600));
+    assert_eq!(vida(), (TTL_ESTIRAR_HASTA, TTL_ESTIRAR_HASTA));
 
     p.env.ledger().with_mut(|l| l.sequence_number += 91 * DIA); // pasan 91 días
     p.contrato.entregar(&2, &p.rosa, &1);
-    assert_eq!(vida(), (2_073_600, 2_073_600));
+    assert_eq!(vida(), (TTL_ESTIRAR_HASTA, TTL_ESTIRAR_HASTA));
 }
 
-// 9. pasos al azar contra un modelo (semillas fijas, se puede repetir)
+// 8. pasos al azar contra un modelo (semillas fijas, se puede repetir)
 
 struct Azar(u64);
 
@@ -507,7 +500,7 @@ impl Azar {
 #[test]
 fn al_azar_el_contrato_y_las_cuentas_siempre_coinciden() {
     for semilla in 1..=25u64 {
-        let p = setup();
+        let p = preparar();
         let mut azar = Azar(semilla.wrapping_mul(0x9E37_79B9_7F4A_7C15));
         let recolectores = [p.rosa.clone(), p.luis.clone(), Address::generate(&p.env)];
         let (mut libres, mut ultima) = (0u32, 0u32);

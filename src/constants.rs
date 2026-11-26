@@ -7,4 +7,4 @@ pub const TTL_ESTIRAR_HASTA: u32 = 120 * DIA;
 pub const VALOR_MINIMO: i128 = 10_000_000; // 1 XLM, para que el cobro pueda crear la cuenta (CAP-73)
 pub const VALOR_MAXIMO: i128 = 100_000_000_000; // 10 000 XLM
 
-pub const XLM: [u8; 4] = [0, 0, 0, 0]; // Asset::Native en XDR
+pub const ACTIVO_XLM: [u8; 4] = [0, 0, 0, 0]; // Asset::Native en XDR

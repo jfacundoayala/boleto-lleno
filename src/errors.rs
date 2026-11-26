@@ -9,6 +9,6 @@ pub enum Error {
     SinLibres = 3,          // no hay tantos boletos con plata
     NumeroInvalido = 4,     // entrega repetida o salteada
     RecolectorInvalido = 5, // el propio contrato
-    NadaParaCobrar = 6,
-    MedidorInvalido = 7, // el propio contrato
+    NadaParaCobrar = 6,     // el recolector no tiene boletos
+    MedidorInvalido = 7,    // el propio contrato
 }
