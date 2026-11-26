@@ -7,7 +7,9 @@ use soroban_sdk::testutils::{
     Address as _, AuthorizedFunction, Events as _, Ledger as _, MockAuth, MockAuthInvoke,
 };
 use soroban_sdk::token::TokenClient;
-use soroban_sdk::{xdr, Event as _, IntoVal, Symbol, TryFromVal, TryIntoVal, Val, Vec};
+use soroban_sdk::{
+    xdr, Address, Env, Event as _, IntoVal, Symbol, TryFromVal, TryIntoVal, Val, Vec,
+};
 use std::rc::Rc;
 
 const VALOR: i128 = 20_000_000; // un boleto vale 2 XLM

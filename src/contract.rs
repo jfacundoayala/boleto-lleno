@@ -23,21 +23,21 @@ contractmeta!(
 /// Regla que no se rompe: la plata del contrato alcanza para todos los boletos,
 /// los libres y los entregados.
 pub trait BoletoLlenoInterface {
-    /// 1. El productor aparta la plata de esa cantidad de boletos. Firma el productor.
+    /// Paso 1: El productor aparta la plata de esa cantidad de boletos. Firma el productor.
     /// Falla con `CantidadInvalida` si son 0.
     fn cargar(env: Env, boletos: u32) -> Result<(), Error>;
 
-    /// 2. El medidor entrega boletos por el café medido, solo si tienen plata.
+    /// Paso 2: El medidor entrega boletos por el café medido, solo si tienen plata.
     /// Firma el medidor. El número va de a uno: repetir el envío no entrega dos veces.
     /// Falla con `CantidadInvalida`, `NumeroInvalido`, `RecolectorInvalido` o `SinLibres`.
     fn entregar(env: Env, numero: u32, recolector: Address, boletos: u32) -> Result<(), Error>;
 
-    /// 3. Cambia por plata todos los boletos de un recolector y devuelve cuánto cobró.
+    /// Paso 3: Cambia por plata todos los boletos de un recolector y devuelve cuánto cobró.
     /// No pide firma: la plata solo puede ir al recolector, la pida quien la pida.
     /// Falla con `NadaParaCobrar` si no tiene boletos.
     fn cobrar(env: Env, recolector: Address) -> Result<i128, Error>;
 
-    /// 4. El productor recupera la plata de boletos libres. Los entregados no se tocan.
+    /// Paso 4: El productor recupera la plata de boletos libres. Los entregados no se tocan.
     /// Firma el productor. Falla con `CantidadInvalida` o `SinLibres`.
     fn retirar(env: Env, boletos: u32) -> Result<(), Error>;
 
