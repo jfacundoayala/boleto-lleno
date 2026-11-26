@@ -1,6 +1,6 @@
 [package]
 name = "boleto-lleno"
-version = "0.1.0"
+version = "2.0.0"
 edition = "2021"
 description = "Un boleto de café que solo se entrega si su plata ya está apartada"
 license = "MIT"

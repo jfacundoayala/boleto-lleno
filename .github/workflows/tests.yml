@@ -23,3 +23,21 @@ jobs:
         run: cargo clippy --locked --all-targets -- -D warnings
       - name: Tests
         run: cargo test --locked
+
+  compilar:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Instalar Rust
+        run: |
+          rustup toolchain install stable --profile minimal --target wasm32v1-none
+          rustup default stable
+      - name: Instalar Stellar CLI
+        uses: stellar/stellar-cli@v28.1.0
+        with:
+          version: "28.1.0"
+      - name: Compilar el contrato
+        run: |
+          stellar contract build --locked
+          ls -l target/wasm32v1-none/release/*.wasm
+          sha256sum target/wasm32v1-none/release/*.wasm

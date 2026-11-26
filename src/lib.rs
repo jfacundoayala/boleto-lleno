@@ -6,14 +6,22 @@
 //   2. entregar - el medidor da boletos por el café medido
 //   3. cobrar   - los boletos se cambian por plata para el recolector
 //   4. retirar  - el productor recupera solo lo que no se entregó
+//
+// Además el productor puede cambiar al medidor. La moneda es siempre XLM.
 #![no_std]
 use soroban_sdk::{
-    contract, contracterror, contractevent, contractimpl, contracttype, panic_with_error, token,
-    Address, Env,
+    contract, contracterror, contractevent, contractimpl, contractmeta, contracttype,
+    panic_with_error, token, Address, Bytes, Env,
 };
+
+contractmeta!(
+    key = "Description",
+    val = "Boleto Lleno: un boleto de cafe que solo se entrega si su plata ya esta apartada"
+);
 
 const VALOR_MINIMO: i128 = 10_000_000; // 1 XLM: mínimo para activar una cuenta nueva, según CAP-73 (le queda de reserva)
 const DIA: u32 = 17_280; // ledgers en un día (uno cada ~5 segundos)
+const XLM: [u8; 4] = [0, 0, 0, 0]; // así se escribe "XLM" (Asset::Native) en el formato de la red
 
 // Las claves de lo que el contrato guarda, igual que en el contador.
 #[contracttype]
@@ -29,8 +37,8 @@ pub enum DataKey {
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct Datos {
     pub productor: Address, // pone la plata
-    pub medidor: Address,   // mide el café y entrega los boletos
-    pub moneda: Address,    // con qué se paga: el contrato de XLM (se revisa con datos())
+    pub medidor: Address,   // mide el café y entrega los boletos (el productor lo puede cambiar)
+    pub moneda: Address,    // siempre XLM: la calcula el contrato, no se elige
     pub valor: i128,        // cuánta plata vale un boleto
 }
 
@@ -87,22 +95,25 @@ pub struct Retirado {
     pub boletos: u32,
 }
 
+#[contractevent]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct MedidorCambiado {
+    pub medidor: Address,
+}
+
 #[contract]
 pub struct BoletoLleno;
 
 #[contractimpl]
 impl BoletoLleno {
-    /// Corre una sola vez, al desplegar: fija los roles, la moneda y el valor.
-    pub fn __constructor(
-        env: Env,
-        productor: Address,
-        medidor: Address,
-        moneda: Address,
-        valor: i128,
-    ) {
+    /// Corre una sola vez, al desplegar: fija los roles y el valor. La moneda es XLM.
+    pub fn __constructor(env: Env, productor: Address, medidor: Address, valor: i128) {
         if valor < VALOR_MINIMO {
             panic_with_error!(&env, Error::ValorInvalido);
         }
+        // La dirección del contrato de XLM en esta red. Nadie la puede cambiar por otra moneda.
+        let xlm = Bytes::from_array(&env, &XLM);
+        let moneda = env.deployer().with_stellar_asset(xlm).deployed_address();
         let datos = Datos { productor, medidor, moneda, valor };
         env.storage().instance().set(&DataKey::Datos, &datos);
         guardar(&env, &Estado { libres: 0, entregados: 0, ultima: 0 });
@@ -194,6 +205,18 @@ impl BoletoLleno {
         mover(&env, &datos, &env.current_contract_address(), &datos.productor, boletos);
         Retirado { boletos }.publish(&env);
         Ok(())
+    }
+
+    /// El productor cambia al medidor, por ejemplo si perdió o le robaron la clave.
+    /// Los boletos ya entregados no cambian.
+    pub fn cambiar_medidor(env: Env, medidor: Address) {
+        let mut datos = Self::datos(env.clone());
+        datos.productor.require_auth();
+        datos.medidor = medidor.clone();
+        let s = env.storage().instance();
+        s.set(&DataKey::Datos, &datos);
+        s.extend_ttl(30 * DIA, 120 * DIA);
+        MedidorCambiado { medidor }.publish(&env);
     }
 
     // Consultas: solo leen, no piden firma
