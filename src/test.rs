@@ -1,4 +1,4 @@
-// Se corren con:  cargo test
+//! Los tests del contrato. Se corren con `cargo test`.
 extern crate std;
 
 use super::*;
