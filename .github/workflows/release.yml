@@ -1,0 +1,23 @@
+name: release
+
+# Al crear una etiqueta v*, GitHub compila el contrato, lo publica como release
+# y deja una atestación (SEP-55). Así se puede comprobar que el contrato
+# desplegado sale de este código.
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  id-token: write
+  contents: write
+  attestations: write
+
+jobs:
+  release:
+    uses: stellar-expert/soroban-build-workflow/.github/workflows/release.yml@6b16426dd3a61715ddddf83a2df322a6371fe071
+    with:
+      release_name: ${{ github.ref_name }}
+      release_description: "Boleto Lleno: contrato compilado por GitHub, con atestación de origen."
+    secrets:
+      release_token: ${{ secrets.GITHUB_TOKEN }}
