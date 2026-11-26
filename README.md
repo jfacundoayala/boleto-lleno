@@ -3,29 +3,13 @@
   <img src="assets/portada.svg" alt="Boleto Lleno. Ningún boleto de café sin su plata apartada" width="100%">
 </picture>
 
-<br>
-
-<p align="center">
-  <a href="https://github.com/jfacundoayala/boleto-lleno/actions/workflows/tests.yml"><img src="https://github.com/jfacundoayala/boleto-lleno/actions/workflows/tests.yml/badge.svg" alt="Estado de los tests"></a>
-  <a href="https://stellar.expert/explorer/testnet/contract/CBWS4OR7LPKIK6TTYCTGWP2X2Y24VKSLAC6ALWIAUREGMYPKMKXPLAYC"><img src="https://img.shields.io/badge/Stellar-Testnet-55795F" alt="Publicado en Stellar Testnet"></a>
-  <a href="https://github.com/jfacundoayala/boleto-lleno/releases/latest"><img src="https://img.shields.io/badge/compilado-verificado-8A6D55" alt="Compilado verificado"></a>
-  <a href="LICENSE"><img src="https://img.shields.io/badge/licencia-MIT-B59C86" alt="Licencia MIT"></a>
-</p>
-
-<p align="center">
-  <a href="https://jfacundoayala.github.io/boleto-lleno/"><b>Ver en vivo</b></a> ·
-  <a href="#el-problema">Problema</a> ·
-  <a href="#la-solución">Solución</a> ·
-  <a href="#cómo-funciona">Cómo funciona</a> ·
-  <a href="#probado-en-testnet">Testnet</a> ·
-  <a href="#qué-se-puede-verificar">Verificar</a> ·
-  <a href="#tests">Tests</a> ·
-  <a href="#cómo-correrlo">Cómo correrlo</a>
-</p>
+[![Tests](https://github.com/jfacundoayala/boleto-lleno/actions/workflows/tests.yml/badge.svg)](https://github.com/jfacundoayala/boleto-lleno/actions/workflows/tests.yml)
 
 Un boleto de café que solo se puede entregar si la plata para pagarlo ya está apartada.
 
-> Tarea "Primer contrato inteligente en Stellar" del Pura Vida Bootcamp, por Juan Facundo Ayala.
+Es mi tarea "Primer contrato inteligente en Stellar" del Pura Vida Bootcamp. El contrato
+está en Testnet y se puede ver andando en la
+[web del proyecto](https://jfacundoayala.github.io/boleto-lleno/).
 
 ## El problema
 
@@ -113,8 +97,8 @@ if boletos > estado.libres {
 }
 ```
 
-> [!IMPORTANT]
-> La plata del contrato siempre alcanza para todos los boletos, los libres y los entregados.
+Por eso la plata del contrato siempre alcanza para todos los boletos, los libres y los
+entregados.
 
 <details>
 <summary><b>Errores del contrato</b></summary>
@@ -157,8 +141,7 @@ if boletos > estado.libres {
 - Si pasan 120 días sin movimientos, la red archiva los boletos y el contrato. La plata no
   se pierde, pero hay que restaurarlos antes de seguir.
 
-> [!NOTE]
-> Es una práctica en Testnet y no tiene auditoría profesional.
+Es una práctica en Testnet y no tiene auditoría profesional.
 
 ## Probado en Testnet
 
@@ -227,16 +210,15 @@ moneda y la segunda no tenía la release atada a su código.
 
 ## Tests
 
-Están en [`src/test.rs`](src/test.rs).
+Están en [`src/test`](src/test), un archivo por tema:
 
-| Qué prueban | Para qué |
-| :-- | :-- |
-| El camino completo | Cargar, entregar, cobrar y retirar |
-| No hay boleto vacío | Sin plata no se entrega y lo entregado no se retira |
-| El cobro | No se cobra dos veces, la plata le llega al recolector y le crea la cuenta |
-| Las firmas | Cada uno firma lo suyo y el medidor anterior deja de poder entregar |
-| Lo que queda a la vista | Errores, eventos y tiempo de vida de los datos |
-| Al azar | 25 recorridos de 80 pasos donde la plata del contrato siempre coincide con los boletos |
+- `flujo.rs`: el camino completo y el cobro, que no se repite y le crea la cuenta a quien
+  no tenía.
+- `limites.rs`: sin plata no se entrega y lo entregado no se retira.
+- `firmas.rs`: cada uno firma lo suyo y el medidor anterior deja de poder entregar.
+- `vista.rs`: eventos, datos y tiempo de vida.
+- `azar.rs`: 25 recorridos de 80 pasos donde la plata del contrato siempre coincide con
+  los boletos.
 
 ## Cómo correrlo
 
@@ -260,9 +242,9 @@ boleto-lleno
 │   ├── errors.rs      los errores
 │   ├── events.rs      los eventos
 │   ├── constants.rs   valores fijos
-│   └── test.rs        los tests
+│   └── test           los tests, por tema
+├── docs           la web: index.html, estilo.css y app.js
 ├── assets         la portada
-├── docs           la web que lee el contrato en vivo
 └── Cargo.toml     la configuración
 ```
 
