@@ -1,4 +1,4 @@
-// Pasos al azar contra un modelo. Las semillas son fijas, así se puede repetir.
+//! Pasos al azar contra un modelo. Las semillas son fijas, así se puede repetir.
 
 use super::*;
 use crate::{Error, Estado};

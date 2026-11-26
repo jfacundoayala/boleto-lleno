@@ -1,3 +1,5 @@
+//! Valores fijos del contrato.
+
 pub const DIA: u32 = 17_280; // ledgers por día
 
 // TTL: si quedan menos de 30 días, se estira a 120

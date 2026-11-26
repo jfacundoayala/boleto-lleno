@@ -208,6 +208,29 @@ gh attestation verify boleto-lleno_v3.0.0.wasm -R jfacundoayala/boleto-lleno \
 Las versiones anteriores siguen en Testnet pero ya no se usan. La primera dejaba elegir la
 moneda y la segunda no tenía la release atada a su código.
 
+## Estructura
+
+```text
+boleto-lleno
+├── src                  el contrato
+│   ├── lib.rs           junta los módulos y dice qué se ve desde afuera
+│   ├── contract.rs      la interfaz y las reglas
+│   ├── storage.rs       leer y guardar datos
+│   ├── model.rs         Datos y Estado
+│   ├── errors.rs        los errores
+│   ├── events.rs        los eventos
+│   ├── constants.rs     valores fijos
+│   └── test             los tests, un archivo por tema
+├── docs                 la web: index.html, estilo.css y app.js
+├── assets               la portada
+└── .github/workflows    tests en cada cambio y compilado de cada versión
+```
+
+Las reglas están todas en `contract.rs`. `storage.rs` es el único que toca los datos
+guardados y de paso les renueva el tiempo de vida. La web solo lee: no firma ni mueve plata.
+
+Los cambios entre versiones están en [CHANGELOG.md](CHANGELOG.md).
+
 ## Tests
 
 Están en [`src/test`](src/test), un archivo por tema:
@@ -230,22 +253,6 @@ git clone https://github.com/jfacundoayala/boleto-lleno
 cd boleto-lleno
 cargo test
 stellar contract build
-```
-
-```text
-boleto-lleno
-├── src
-│   ├── lib.rs         arma el contrato
-│   ├── contract.rs    las funciones públicas
-│   ├── storage.rs     leer y guardar datos
-│   ├── model.rs       los tipos
-│   ├── errors.rs      los errores
-│   ├── events.rs      los eventos
-│   ├── constants.rs   valores fijos
-│   └── test           los tests, por tema
-├── docs           la web: index.html, estilo.css y app.js
-├── assets         la portada
-└── Cargo.toml     la configuración
 ```
 
 ## Licencia

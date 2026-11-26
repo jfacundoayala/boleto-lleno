@@ -1,3 +1,5 @@
+//! Eventos, datos y tiempo de vida.
+
 extern crate std;
 
 use super::*;

@@ -1,3 +1,5 @@
+//! Errores que puede devolver el contrato.
+
 use soroban_sdk::contracterror;
 
 #[contracterror]

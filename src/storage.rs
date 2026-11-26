@@ -1,3 +1,5 @@
+//! Leer y guardar datos. Cada guardado renueva el tiempo de vida.
+
 use soroban_sdk::{contracttype, Address, Env};
 
 use crate::constants::{TTL_ESTIRAR_HASTA, TTL_RENOVAR_SI_QUEDAN};
