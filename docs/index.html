@@ -148,6 +148,12 @@
   .respuesta.ver { display: block; }
   .respuesta b { font-family: Fraunces, Georgia, serif; font-size: 22px; }
   .chico { font-size: 13px; color: var(--ink-3); margin-top: 10px; }
+  .mini { font-size: 13px; font-weight: 600; color: var(--ink-2); margin: 22px 0 8px; }
+  .conocidos { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+  .conocidos button { width: 100%; display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 10px 14px; border: 1px solid var(--line); border-radius: 12px; background: transparent; color: var(--ink); font: inherit; font-size: 14px; cursor: pointer; text-align: left; }
+  .conocidos button:hover { border-color: var(--green); }
+  .conocidos button:focus-visible { outline: 2px solid var(--green); outline-offset: 2px; }
+  .conocidos small { color: var(--ink-3); font-size: 13px; }
   .chico button { background: none; border: 0; padding: 0; color: var(--green); font: inherit; cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
 
   /* pasos */
@@ -221,7 +227,7 @@
         <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/></svg>
         Ver el código
       </a>
-      <a class="boton" id="link-contrato" href="https://stellar.expert/explorer/testnet/contract/CBZ47VWCFR2MP6SOQEJVVP3L2XXDIK3IMST5MEQFMBFZOCD7QVXCEYIQ">Ver el contrato en la red ↗</a>
+      <a class="boton" id="link-contrato" href="https://stellar.expert/explorer/testnet/contract/CBWS4OR7LPKIK6TTYCTGWP2X2Y24VKSLAC6ALWIAUREGMYPKMKXPLAYC">Ver el contrato en la red ↗</a>
     </div>
   </div>
 
@@ -265,7 +271,8 @@
         <button class="boton lleno" type="submit">Consultar</button>
       </form>
       <div class="respuesta" id="respuesta"></div>
-      <p class="chico">Probá con <button type="button" id="rosa">la cuenta de Rosa</button>, la recolectora de la prueba.</p>
+      <h3 class="mini">Recolectores de la prueba</h3>
+      <ul class="conocidos" id="conocidos"><li class="cargando">Leyendo…</li></ul>
     </section>
 
     <section class="tarjeta bloque">
@@ -294,7 +301,7 @@
       <dt>Productor</dt><dd class="mono" id="d-productor">…</dd>
       <dt>Medidor</dt><dd class="mono" id="d-medidor">…</dd>
       <dt>Moneda</dt><dd id="d-moneda">…</dd>
-      <dt>Contrato</dt><dd class="mono"><a href="https://stellar.expert/explorer/testnet/contract/CBZ47VWCFR2MP6SOQEJVVP3L2XXDIK3IMST5MEQFMBFZOCD7QVXCEYIQ">CBZ47V…XCEYIQ</a></dd>
+      <dt>Contrato</dt><dd class="mono"><a href="https://stellar.expert/explorer/testnet/contract/CBWS4OR7LPKIK6TTYCTGWP2X2Y24VKSLAC6ALWIAUREGMYPKMKXPLAYC">CBWS4O…XPLAYC</a></dd>
       <dt>Red</dt><dd>Stellar Testnet, la red de prueba</dd>
     </dl>
   </section>
@@ -318,29 +325,37 @@
     document.getElementById("historia").innerHTML = '<li class="cargando">No se pudo leer la red.</li>';
     return;
   }
-  const CONTRATO = "CBZ47VWCFR2MP6SOQEJVVP3L2XXDIK3IMST5MEQFMBFZOCD7QVXCEYIQ";
+  const CONTRATO = "CBWS4OR7LPKIK6TTYCTGWP2X2Y24VKSLAC6ALWIAUREGMYPKMKXPLAYC";
   const RPC = "https://soroban-testnet.stellar.org";
   const RED = S.Networks.TESTNET;
   const XLM_SAC = "CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC";
-  const ROSA = "GCG32KQZE7FK4TDWGQGXYO3QMOBFPWEJMYM7XH7JYNAKZJ36VF223VSH";
+  const RECOLECTORES = [
+    { nombre: "Rosa", cuenta: "GCG32KQZE7FK4TDWGQGXYO3QMOBFPWEJMYM7XH7JYNAKZJ36VF223VSH", nota: "recolectora" },
+    { nombre: "Ana", cuenta: "GBSOVBN5TFUASEK6TLDTKPME7O5OSITLUD47RG4UBR7W74WGOEGTVHYO", nota: "el cobro le creó la cuenta" },
+  ];
   const EXPERT = "https://stellar.expert/explorer/testnet";
   const STROOPS = 10_000_000n;
 
   // La prueba del README. La red guarda los eventos solo unos 7 días,
   // así que estos quedan siempre a la vista. Los nuevos se leen en vivo.
   const PRUEBA = [
-    { tipo: "publicar", hash: "4c466384a0dbdedf81d9f037c811469d2b81d34e6be48f26927b0c76290f45e5", fecha: "2026-11-26T03:21:53Z", texto: "Se publica el contrato", detalle: "Boletos de 2 XLM" },
-    { tipo: "cargar", hash: "1d978b375879b36f4e279845ab6106a9d10674d6388e995d308d84615c7cffc8", fecha: "2026-11-26T03:22:28Z", texto: "El productor carga 5 boletos", detalle: "Entran 10 XLM" },
-    { tipo: "entregar", hash: "e48b88a1826960a749cc311d05943a4476c08fc6650155220940a1013a2fc706", fecha: "2026-11-26T03:22:33Z", texto: "El medidor entrega 3 boletos a GCG32K…3VSH", detalle: "Entrega número 1" },
-    { tipo: "retirar", hash: "2ad4a62a3b96a681126bcdf33fa45601f1a90c5e449f75e0388f92f8596b435e", fecha: "2026-11-26T03:22:38Z", texto: "El productor retira 2 boletos", detalle: "Vuelven 4 XLM" },
-    { tipo: "cobrar", hash: "988b0ea246d4e5d559d50fdd231cb734461b94afcb2b2eb1f474dab207ba7286", fecha: "2026-11-26T03:22:43Z", texto: "Se cobran 3 boletos para GCG32K…3VSH", detalle: "Le llegan 6 XLM" },
-    { tipo: "cargar", hash: "b0880f54e887cf8bdee5accbb36cc0dc6f5aba11793edc08ccd3e830657d75b3", fecha: "2026-11-26T03:23:53Z", texto: "El productor carga 1 boleto", detalle: "Entran 2 XLM" },
-    { tipo: "entregar", hash: "9d7cf40acd6e12fff60a3110f8b0011a286755bcd0f6bed896ac773a1e9b7b3e", fecha: "2026-11-26T03:23:58Z", texto: "El medidor entrega 1 boleto a GBRQ7O…6EUY", detalle: "Entrega número 2" },
-    { tipo: "cobrar", hash: "da8d3747ad68d354c031bf95afef9aa08505a4abe0fa079b0d2d8d1421430d08", fecha: "2026-11-26T03:24:03Z", texto: "Se cobra 1 boleto para GBRQ7O…6EUY", detalle: "Le llegan 2 XLM y se crea su cuenta" },
+    { tipo: "publicar", hash: "b44c1ecac254f33af95610ae634969bd40c2eab50340c89978f27db18c6e4f91", fecha: "2026-11-26T03:59:18Z", texto: "Se publica el contrato", detalle: "Boletos de 2 XLM" },
+    { tipo: "cargar", hash: "02980e603ba46c6e3e43fe398bbffe16912f88ae928be15689c40c72e7585d1c", fecha: "2026-11-26T03:59:23Z", texto: "El productor carga 5 boletos", detalle: "Entran 10 XLM" },
+    { tipo: "entregar", hash: "5fc949b94da576506f2360c06742398bbc3b83f7e35b44c069a99c6e4afd9f30", fecha: "2026-11-26T03:59:28Z", texto: "El medidor entrega 3 boletos a Rosa", detalle: "Entrega número 1" },
+    { tipo: "retirar", hash: "f0b96ea8c1cd39b9ac4b92c6e4fd85b91f0ff5e739a1074879c888ecca61ef87", fecha: "2026-11-26T03:59:33Z", texto: "El productor retira 2 boletos", detalle: "Vuelven 4 XLM" },
+    { tipo: "cobrar", hash: "afe4666a075b7ea546c2c29ebfddec07dd982e95d28be865f4a10591f388edf3", fecha: "2026-11-26T03:59:38Z", texto: "Se cobran 3 boletos para Rosa", detalle: "Le llegan 6 XLM" },
+    { tipo: "cargar", hash: "b474625641e8791549d4bee98c9dcf20caa2d6a464d462847e09dcd00af07836", fecha: "2026-11-26T03:59:43Z", texto: "El productor carga 1 boleto", detalle: "Entran 2 XLM" },
+    { tipo: "entregar", hash: "5b355aa194896b4b9a2f7a014921ec1e84c98a170076edc83ebc229a7446be08", fecha: "2026-11-26T03:59:48Z", texto: "El medidor entrega 1 boleto a Ana", detalle: "Entrega número 2" },
+    { tipo: "cobrar", hash: "8ac2a38f233e633afbe88babea625b697b99fae560024ad6e92be66a51b25047", fecha: "2026-11-26T03:59:53Z", texto: "Se cobra 1 boleto para Ana", detalle: "Le llegan 2 XLM y se crea su cuenta" },
+    { tipo: "cargar", hash: "8e3213482d86276f38cb976e6e76584e04256811f7e4cd20b618599756b6f599", fecha: "2026-11-26T03:59:58Z", texto: "El productor carga 4 boletos", detalle: "Entran 8 XLM" },
+    { tipo: "medidor", hash: "e1f54140bf09746b3d8b0e9272a307f4f94252cc5945d132e9363a943ccbe4d4", fecha: "2026-11-26T04:00:03Z", texto: "El productor cambia el medidor a GC4JW6…DXBD", detalle: "Antes era GCB5BD…IAA2" },
+    { tipo: "entregar", hash: "e5ada3e125e7bc361c937d1483064c2a8b1ada7ed714721ff23fce3a884a3b45", fecha: "2026-11-26T04:00:08Z", texto: "El medidor entrega 2 boletos a Rosa", detalle: "Entrega número 3" },
   ];
 
   const $ = (id) => document.getElementById(id);
   const corto = (a) => a.slice(0, 6) + "…" + a.slice(-4);
+  const NOMBRES = Object.fromEntries(RECOLECTORES.map((r) => [r.cuenta, r.nombre]));
+  const nombre = (a) => NOMBRES[a] || corto(a);
   const xlm = (stroops) => {
     const v = BigInt(stroops);
     const ent = v / STROOPS, dec = v % STROOPS;
@@ -391,7 +406,7 @@
     const caja = $("boletos");
     const total = estado.libres + estado.entregados;
     if (total === 0) {
-      caja.innerHTML = '<span class="vacio">Ahora no hay boletos: la prueba terminó con todo cobrado o retirado.</span>';
+      caja.innerHTML = '<span class="vacio">Ahora no hay boletos: todo se cobró o se retiró.</span>';
     } else {
       const max = 40;
       const html = [];
@@ -428,7 +443,7 @@
   function traducir(ev) {
     const tema = ev.topic.map((t) => S.scValToNative(t));
     const v = S.scValToNative(ev.value);
-    const quien = tema[1] ? corto(tema[1]) : "";
+    const quien = tema[1] ? nombre(tema[1]) : "";
     if (tema[0] === "medidor_cambiado") {
       return { hash: ev.txHash, fecha: ev.ledgerClosedAt, tipo: "medidor", texto: `El productor cambia el medidor a ${corto(v.medidor)}`, detalle: `Antes era ${corto(v.anterior)}` };
     }
@@ -480,6 +495,15 @@
       </li>`).join("");
   }
 
+  async function pintarConocidos() {
+    const filas = await Promise.all(RECOLECTORES.map(async (r) => {
+      const n = (await cliente.boletos({ recolector: r.cuenta })).result;
+      const cuenta = n === 0 ? "nada sin cobrar" : `${n} boleto${n === 1 ? "" : "s"} sin cobrar`;
+      return `<li><button type="button" data-cuenta="${r.cuenta}"><span><b>${r.nombre}</b> · ${r.nota}</span><small>${cuenta}</small></button></li>`;
+    }));
+    $("conocidos").innerHTML = filas.join("");
+  }
+
   let enCurso = false;
   async function actualizar() {
     if (enCurso) return;
@@ -491,6 +515,7 @@
       const lectura = await leerEstado();
       valorBoleto = BigInt(lectura.datos.valor);
       pintarEstado(lectura);
+      await pintarConocidos();
       vivo(true, 'En vivo<span class="texto-largo"> · Testnet</span>');
     } catch (err) {
       console.error(err);
@@ -531,7 +556,10 @@
 
   $("refrescar").addEventListener("click", actualizar);
   $("consulta").addEventListener("submit", (e) => { e.preventDefault(); consultar($("cuenta").value); });
-  $("rosa").addEventListener("click", () => { $("cuenta").value = ROSA; consultar(ROSA); });
+  $("conocidos").addEventListener("click", (e) => {
+    const b = e.target.closest("button[data-cuenta]");
+    if (b) { $("cuenta").value = b.dataset.cuenta; consultar(b.dataset.cuenta); }
+  });
 
   actualizar();
   setInterval(() => { if (!document.hidden) actualizar(); }, 60_000);
