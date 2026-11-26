@@ -36,6 +36,24 @@ fn el_medidor_no_puede_cargar() {
     assert_eq!(p.contrato.estado().libres, 0);
 }
 
+// alguien de afuera no puede entregar, retirar ni cambiar el medidor
+#[test]
+fn alguien_de_afuera_no_puede_hacer_nada() {
+    let p = preparar();
+    p.contrato.cargar(&5);
+    let otro = Address::generate(&p.env);
+
+    p.solo_firma(&otro, "entregar", (1u32, &otro, 5u32).into_val(&p.env));
+    assert!(p.contrato.try_entregar(&1, &otro, &5).is_err());
+    p.solo_firma(&otro, "retirar", (5u32,).into_val(&p.env));
+    assert!(p.contrato.try_retirar(&5).is_err());
+    p.solo_firma(&otro, "cambiar_medidor", (&otro,).into_val(&p.env));
+    assert!(p.contrato.try_cambiar_medidor(&otro).is_err());
+
+    assert_eq!(p.contrato.estado().libres, 5);
+    assert_eq!(p.contrato.datos().medidor, p.medidor);
+}
+
 #[test]
 fn el_medidor_no_puede_retirar() {
     let p = preparar();
@@ -82,6 +100,14 @@ fn el_contrato_no_puede_ser_medidor() {
     let r = p.contrato.try_cambiar_medidor(&p.contrato.address);
     assert_eq!(r, Err(Ok(Error::MedidorInvalido)));
     assert_eq!(p.contrato.datos().medidor, p.medidor);
+}
+
+#[test]
+#[should_panic(expected = "Error(Contract, #7)")]
+fn el_contrato_no_puede_nacer_siendo_su_medidor() {
+    let p = preparar();
+    let id = Address::generate(&p.env);
+    p.env.register_at(&id, BoletoLleno, (&p.productor, &id, VALOR));
 }
 
 #[test]

@@ -20,7 +20,8 @@
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cpath d='M6 10h52a4 4 0 0 1 4 4v10a8 8 0 0 0 0 16v10a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V40a8 8 0 0 0 0-16V14a4 4 0 0 1 4-4Z' fill='%2355795F'/%3E%3Cpath d='M22 33l7 7 14-15' fill='none' stroke='%23F4E9DA' stroke-width='5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" media="print" onload="this.media='all'">
+<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap"></noscript>
 <link rel="stylesheet" href="estilo.css">
 </head>
 <body>
@@ -31,7 +32,7 @@
       <svg viewBox="0 0 64 64" aria-hidden="true"><path d="M6 10h52a4 4 0 0 1 4 4v10a8 8 0 0 0 0 16v10a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V40a8 8 0 0 0 0-16V14a4 4 0 0 1 4-4Z" fill="var(--green-2)"/><path d="M22 33l7 7 14-15" fill="none" stroke="#F4E9DA" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/></svg>
       <span>Boleto Lleno</span>
     </a>
-    <span class="live" id="vivo"><span class="dot"></span><span id="vivo-texto">Conectando<span class="texto-largo"> con Testnet</span></span></span>
+    <span class="live" id="vivo" role="status"><span class="dot"></span><span id="vivo-texto">Conectando<span class="texto-largo"> con Testnet</span></span></span>
   </div>
 </header>
 
@@ -50,7 +51,7 @@
 
   <section class="como">
     <h2>Cómo funciona</h2>
-    <p class="sub">Son cuatro pasos y cada uno lo firma la persona que corresponde.</p>
+    <p class="sub">Son cuatro pasos. Cargar, entregar y retirar los firma quien corresponde; el cobro lo puede pedir cualquiera.</p>
     <ol class="camino">
       <li><span class="n">1</span><h3>El productor guarda la plata</h3><p>Antes de la cogida, deja en el contrato la plata de los boletos.</p><code>cargar</code></li>
       <li><span class="n">2</span><h3>El medidor entrega boletos</h3><p>Le da un boleto por cajuela a quien coge café. Solo puede dar boletos que ya tienen plata.</p><code>entregar</code></li>
@@ -99,7 +100,7 @@
         <input id="cuenta" placeholder="G…" autocomplete="off" spellcheck="false" aria-label="Cuenta del recolector">
         <button class="boton lleno" type="submit">Consultar</button>
       </form>
-      <div class="respuesta" id="respuesta"></div>
+      <div class="respuesta" id="respuesta" aria-live="polite"></div>
       <h3 class="mini">Recolectores de la prueba</h3>
       <ul class="conocidos" id="conocidos"><li class="cargando">Leyendo…</li></ul>
     </section>
@@ -167,7 +168,7 @@
   </div>
 </footer>
 
-<script src="https://cdn.jsdelivr.net/npm/@stellar/stellar-sdk@17.4.0/dist/stellar-sdk.min.js" integrity="sha384-XFLlFedMV0w1RG+x1e/VrR49BGtuDQzvn5/guUY+sDYOP/+yiKIVgBn8OuTH/eye" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/@stellar/stellar-sdk@17.4.0/dist/stellar-sdk.min.js" integrity="sha384-XFLlFedMV0w1RG+x1e/VrR49BGtuDQzvn5/guUY+sDYOP/+yiKIVgBn8OuTH/eye" crossorigin="anonymous" defer></script>
 <script src="app.js" defer></script>
 </body>
 </html>

@@ -19,7 +19,7 @@
 @media (prefers-color-scheme: dark) {
   :root {
     --bg: #1D1714; --bg-2: #241D19; --card: #2A221D; --ink: #F4E9DA; --ink-2: #D3C1AE;
-    --ink-3: #A8947F; --line: #3D322B; --green: #7EA385; --green-2: #6A9172;
+    --ink-3: #A8947F; --line: #3D322B; --green: #93B89A; --green-2: #6A9172;
     --green-soft: #2C3A2F; --coffee: #C8A98C; --coffee-soft: #3A2E26; --red: #E08B76;
     --boton: #46664E; --boton-hover: #507358;
     --shadow: 0 1px 2px rgba(0,0,0,.3), 0 8px 24px rgba(0,0,0,.25);

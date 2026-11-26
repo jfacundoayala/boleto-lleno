@@ -96,7 +96,7 @@
       const html = [];
       for (let i = 0; i < Math.min(estado.libres, max); i++) html.push(boleto("var(--green)"));
       for (let i = 0; i < Math.min(estado.entregados, max); i++) html.push(boleto("var(--coffee)"));
-      if (total > 2 * max) html.push(`<span class="vacio">y más</span>`);
+      if (estado.libres > max || estado.entregados > max) html.push(`<span class="vacio">y más</span>`);
       caja.innerHTML = html.join("");
     }
 
@@ -276,6 +276,7 @@
     if (b) { $("cuenta").value = b.dataset.cuenta; consultar(b.dataset.cuenta); }
   });
 
+  pintarHistoria(); // la prueba fija se ve enseguida; lo nuevo llega después
   actualizar();
   setInterval(() => { if (!document.hidden) actualizar(); }, 60_000);
 })();
