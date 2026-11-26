@@ -138,8 +138,8 @@ entregados.
 - Si el productor pierde su clave, no hay arreglo.
 - No paga en colones y el XLM cambia de precio. No alcanza para cumplir la ley por sí solo.
 - No devuelve la plata que alguien mande por fuera de `cargar`.
-- Si pasan 120 días sin movimientos, la red archiva los boletos y el contrato. La plata no
-  se pierde, pero hay que restaurarlos antes de seguir.
+- Si un recolector pasa mucho sin recibir boletos (entre 30 y 120 días), la red archiva
+  los suyos. La plata no se pierde, pero hay que restaurarlos antes de cobrar.
 
 Es una práctica en Testnet y no tiene auditoría profesional.
 
@@ -205,6 +205,9 @@ gh attestation verify boleto-lleno_v3.0.0.wasm -R jfacundoayala/boleto-lleno \
   --signer-repo stellar-expert/soroban-build-workflow
 ```
 
+Ese hash solo sale del compilado de la release, que le agrega al contrato el dato de qué
+repo y qué commit lo generó. Un `stellar contract build` local da otro hash.
+
 Las versiones anteriores siguen en Testnet pero ya no se usan. La primera dejaba elegir la
 moneda y la segunda no tenía la release atada a su código.
 
@@ -235,9 +238,10 @@ Los cambios entre versiones están en [CHANGELOG.md](CHANGELOG.md).
 
 Están en [`src/test`](src/test), un archivo por tema:
 
-- `flujo.rs`: el camino completo y el cobro, que no se repite y le crea la cuenta a quien
-  no tenía.
-- `limites.rs`: sin plata no se entrega y lo entregado no se retira.
+- `flujo.rs`: el camino completo. Sin plata no se entrega, lo entregado no se retira y el
+  cobro no se repite y le crea la cuenta a quien no tenía.
+- `limites.rs`: lo que se rechaza, como valores fuera de rango, cero boletos o una entrega
+  repetida.
 - `firmas.rs`: cada uno firma lo suyo y el medidor anterior deja de poder entregar.
 - `vista.rs`: eventos, datos y tiempo de vida.
 - `azar.rs`: 25 recorridos de 80 pasos donde la plata del contrato siempre coincide con
