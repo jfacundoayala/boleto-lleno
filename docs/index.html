@@ -4,13 +4,13 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Boleto Lleno</title>
-<meta name="description" content="Un boleto de café que solo se entrega si su plata ya está apartada. El contrato en Stellar Testnet, en vivo.">
+<meta name="description" content="Un boleto de café que solo se entrega si la plata para pagarlo ya está guardada. Contrato en Stellar Testnet, en vivo.">
 <meta name="theme-color" content="#FBF6EE" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#1D1714" media="(prefers-color-scheme: dark)">
 <meta property="og:type" content="website">
 <meta property="og:locale" content="es_CR">
 <meta property="og:title" content="Boleto Lleno">
-<meta property="og:description" content="Un boleto de café que solo se entrega si su plata ya está apartada. El contrato en Stellar Testnet, en vivo.">
+<meta property="og:description" content="Un boleto de café que solo se entrega si la plata para pagarlo ya está guardada. Contrato en Stellar Testnet, en vivo.">
 <meta property="og:url" content="https://jfacundoayala.github.io/boleto-lleno/">
 <meta property="og:image" content="https://jfacundoayala.github.io/boleto-lleno/og.png">
 <meta property="og:image:width" content="1200">
@@ -221,7 +221,7 @@
 <main class="wrap">
   <div class="hero">
     <h1 class="serif">Ningún boleto de café <br class="ancho">sin su plata apartada</h1>
-    <p>En algunos cafetales de Costa Rica el recolector recibe un boleto por cada cajuela y después lo cambia por plata. Este contrato en Stellar solo deja entregar un boleto si su plata ya está guardada.</p>
+    <p>En muchas fincas de Costa Rica, a quien coge café le dan un boleto por cada cajuela y después lo cambia por plata. Con este contrato en Stellar, un boleto solo se puede entregar si la plata para pagarlo ya está guardada.</p>
     <div class="pista">
       <a class="boton lleno" href="https://github.com/jfacundoayala/boleto-lleno">
         <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/></svg>
@@ -234,7 +234,7 @@
   <section class="tarjeta estado">
     <div class="estado-cabeza">
       <div>
-        <h2>Cómo está el contrato ahora</h2>
+        <h2>Cómo está el contrato ahorita</h2>
         <p class="sub" id="actualizado" aria-live="polite">Leyendo el contrato…</p>
       </div>
       <button class="boton" id="refrescar" type="button">
@@ -245,15 +245,15 @@
 
     <div class="numeros">
       <div class="numero verde"><b id="n-libres"><span class="esqueleto">0</span></b><small>boletos libres, con plata</small></div>
-      <div class="numero cafe"><b id="n-entregados"><span class="esqueleto">0</span></b><small>entregados sin cobrar</small></div>
-      <div class="numero"><b id="n-valor"><span class="esqueleto">0</span></b><small>XLM vale cada boleto</small></div>
+      <div class="numero cafe"><b id="n-entregados"><span class="esqueleto">0</span></b><small>entregados, sin cobrar</small></div>
+      <div class="numero"><b id="n-valor"><span class="esqueleto">0</span></b><small>XLM vale un boleto</small></div>
       <div class="numero"><b id="n-saldo"><span class="esqueleto">0</span></b><small>XLM guardados en el contrato</small></div>
     </div>
 
     <div class="boletos" id="boletos"></div>
     <div class="leyenda">
-      <span><i style="background:var(--green)"></i>Libre: tiene plata y es de nadie</span>
-      <span><i style="background:var(--coffee)"></i>Entregado: tiene plata y es de un recolector</span>
+      <span><i style="background:var(--green)"></i>Libre: tiene plata y todavía no es de nadie</span>
+      <span><i style="background:var(--coffee)"></i>Entregado: tiene plata y ya es de un recolector</span>
     </div>
 
     <div class="regla" id="regla">
@@ -265,7 +265,7 @@
   <div class="doble">
     <section class="tarjeta bloque">
       <h2>¿Cuántos boletos tiene?</h2>
-      <p class="sub">Pegá la cuenta de un recolector. Lee el contrato, no hace falta firmar.</p>
+      <p class="sub">Pegue la cuenta de un recolector. Solo se lee el contrato, no hay que firmar nada.</p>
       <form id="consulta">
         <input id="cuenta" placeholder="G…" autocomplete="off" spellcheck="false" aria-label="Cuenta del recolector">
         <button class="boton lleno" type="submit">Consultar</button>
@@ -276,33 +276,33 @@
     </section>
 
     <section class="tarjeta bloque">
-      <h2>Las acciones</h2>
-      <p class="sub">Cada una la firma quien corresponde.</p>
+      <h2>Qué se puede hacer</h2>
+      <p class="sub">Cada paso lo firma la persona que corresponde.</p>
       <ol class="pasos">
-        <li><span class="n">1</span><div><code>cargar</code><p>El productor aparta la plata de los boletos.</p></div></li>
-        <li><span class="n">2</span><div><code>entregar</code><p>El medidor da boletos, solo si tienen plata.</p></div></li>
-        <li><span class="n">3</span><div><code>cobrar</code><p>Cualquiera lo pide y la plata va al recolector.</p></div></li>
-        <li><span class="n">4</span><div><code>retirar</code><p>El productor saca solo lo que no se entregó.</p></div></li>
-        <li><span class="n">5</span><div><code>cambiar_medidor</code><p>El productor pone otro medidor si hace falta.</p></div></li>
+        <li><span class="n">1</span><div><code>cargar</code><p>El productor guarda la plata de los boletos.</p></div></li>
+        <li><span class="n">2</span><div><code>entregar</code><p>El medidor le da boletos a quien coge café, solo si tienen plata.</p></div></li>
+        <li><span class="n">3</span><div><code>cobrar</code><p>Cualquiera lo puede pedir, pero la plata solo le llega al recolector.</p></div></li>
+        <li><span class="n">4</span><div><code>retirar</code><p>El productor saca la plata de los boletos que nadie tiene.</p></div></li>
+        <li><span class="n">5</span><div><code>cambiar_medidor</code><p>El productor pone otro medidor, por ejemplo si se le perdió la clave.</p></div></li>
       </ol>
     </section>
   </div>
 
   <section class="tarjeta historia">
     <h2>Lo que pasó en el contrato</h2>
-    <p class="sub">Cada movimiento queda en la red. Tocá el código para ver la transacción.</p>
+    <p class="sub">Todo queda guardado en la red. Toque el código para ver la transacción.</p>
     <ol class="linea" id="historia"><li class="cargando">Buscando movimientos…</li></ol>
   </section>
 
   <section class="tarjeta bloque">
     <h2>Datos del contrato</h2>
-    <p class="sub">Se eligen al publicar. Solo el medidor se puede cambiar, y lo cambia el productor.</p>
+    <p class="sub">Se definen al publicar el contrato. Solo el medidor se puede cambiar, y únicamente el productor puede hacerlo.</p>
     <dl class="datos" id="datos">
       <dt>Productor</dt><dd class="mono" id="d-productor">…</dd>
       <dt>Medidor</dt><dd class="mono" id="d-medidor">…</dd>
       <dt>Moneda</dt><dd id="d-moneda">…</dd>
       <dt>Contrato</dt><dd class="mono"><a href="https://stellar.expert/explorer/testnet/contract/CBWS4OR7LPKIK6TTYCTGWP2X2Y24VKSLAC6ALWIAUREGMYPKMKXPLAYC">CBWS4O…XPLAYC</a></dd>
-      <dt>Red</dt><dd>Stellar Testnet, la red de prueba</dd>
+      <dt>Red</dt><dd>Stellar Testnet, la red de prueba (no es plata real)</dd>
     </dl>
   </section>
 </main>
@@ -321,7 +321,7 @@
   if (!S) {
     document.getElementById("vivo").classList.add("error");
     document.getElementById("vivo-texto").textContent = "Sin conexión";
-    document.getElementById("actualizado").textContent = "No se pudo cargar la herramienta de Stellar. Recargá la página en un rato.";
+    document.getElementById("actualizado").textContent = "No se pudo cargar la herramienta de Stellar. Vuelva a cargar la página en un ratito.";
     document.getElementById("historia").innerHTML = '<li class="cargando">No se pudo leer la red.</li>';
     return;
   }
@@ -406,7 +406,7 @@
     const caja = $("boletos");
     const total = estado.libres + estado.entregados;
     if (total === 0) {
-      caja.innerHTML = '<span class="vacio">Ahora no hay boletos: todo se cobró o se retiró.</span>';
+      caja.innerHTML = '<span class="vacio">En este momento no hay boletos: todo se cobró o se retiró.</span>';
     } else {
       const max = 40;
       const html = [];
@@ -420,7 +420,7 @@
     const ok = saldo >= necesita;
     $("regla").classList.toggle("mal", !ok);
     $("regla-texto").textContent = ok
-      ? "Todos los boletos tienen su plata."
+      ? "Todos los boletos tienen su plata guardada."
       : "La plata del contrato no alcanza para todos los boletos.";
     $("regla-cuenta").textContent = `Hay ${xlm(saldo)} XLM y hacen falta ${xlm(necesita)} XLM (${total} boleto${total === 1 ? "" : "s"} × ${xlm(valor)} XLM).`;
 
@@ -520,7 +520,7 @@
     } catch (err) {
       console.error(err);
       vivo(false, "Sin conexión");
-      $("actualizado").textContent = "No se pudo leer la red. Probá de nuevo en un rato.";
+      $("actualizado").textContent = "No se pudo leer la red. Intente de nuevo en un ratito.";
     }
     try {
       pintarHistoria(servidor ? await leerEventos() : undefined);
@@ -546,11 +546,11 @@
       if (!cliente) await conectar();
       const n = (await cliente.boletos({ recolector: cuenta })).result;
       caja.innerHTML = n === 0
-        ? `<b>0</b> boletos sin cobrar.<div class="chico">Si tuvo boletos, ya los cobró.</div>`
+        ? `<b>0</b> boletos sin cobrar.<div class="chico">Si tenía boletos, ya los cobró.</div>`
         : `<b>${n}</b> boleto${n === 1 ? "" : "s"} sin cobrar, con su plata apartada.`;
     } catch (err) {
       console.error(err);
-      caja.innerHTML = "No se pudo consultar la red. Probá de nuevo en un rato.";
+      caja.innerHTML = "No se pudo consultar la red. Intente de nuevo en un ratito.";
     }
   }
 
